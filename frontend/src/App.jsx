@@ -15,8 +15,7 @@ import Login from "./page/login";
 import CaraKerja from "./page/carakerja";
 import Harga from "./page/harga";
 import Register from "./page/register";
-
-// --- Komponen Pembantu ---
+import InformasiDetail from "./page/informasiDetail";
 
 const ServiceCard = ({ icon: Icon, title, description, delay }) => (
   <div
@@ -32,7 +31,6 @@ const ServiceCard = ({ icon: Icon, title, description, delay }) => (
   </div>
 );
 
-// Data Slider dipindahkan ke luar komponen agar tidak dibuat ulang pada setiap render
 const SLIDES = [
   {
     src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80",
@@ -56,7 +54,6 @@ const ImageSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slideCount = SLIDES.length;
 
-  // Auto slide every 5 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slideCount);
@@ -86,7 +83,6 @@ const ImageSlider = () => {
           clipPath: "polygon(0 10%, 100% 0, 100% 90%, 0 100%)",
         }}
       >
-        {/* Images Container */}
         <div className="relative w-full" style={{ aspectRatio: "16/10" }}>
           {SLIDES.map((slide, index) => (
             <img
@@ -100,7 +96,6 @@ const ImageSlider = () => {
           ))}
         </div>
 
-        {/* Navigation Arrows */}
         <button
           onClick={prevSlide}
           className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg"
@@ -116,7 +111,6 @@ const ImageSlider = () => {
           <ChevronRight className="w-6 h-6" />
         </button>
 
-        {/* Dots Indicator */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
           {SLIDES.map((_, index) => (
             <button
@@ -136,15 +130,11 @@ const ImageSlider = () => {
   );
 };
 
-// --- Konten Halaman Utama ---
-
 const HomePageContent = (
   <>
-    {/* Hero Section */}
     <section className="bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left Content */}
           <div className="space-y-6 order-2 lg:order-1" data-aos="fade-right">
             <div className="inline-block">
               <span className="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold">
@@ -168,7 +158,6 @@ const HomePageContent = (
                 Pelajari Lebih Lanjut
               </button>
             </div>
-            {/* Info Items */}
             <div className="space-y-3 pt-4">
               <div className="flex items-center space-x-3 text-gray-700">
                 <Users className="w-5 h-5 text-gray-400" />
@@ -189,13 +178,11 @@ const HomePageContent = (
               </div>
             </div>
           </div>
-          {/* Right Image - Slider */}
           <ImageSlider />
         </div>
       </div>
     </section>
 
-    {/* Services Section */}
     <section className="bg-white py-16 lg:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 lg:mb-16" data-aos="fade-up">
@@ -203,8 +190,8 @@ const HomePageContent = (
             Layanan Kami
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Kami menawarkan berbagai layanan pembuatan website yang
-            profesional dan disesuaikan dengan kebutuhan bisnis Anda.
+            Kami menawarkan berbagai layanan pembuatan website yang profesional
+            dan disesuaikan dengan kebutuhan bisnis Anda.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -230,7 +217,6 @@ const HomePageContent = (
       </div>
     </section>
 
-    {/* Call to Action Section */}
     <section className="bg-gray-50 py-16 lg:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
@@ -260,15 +246,17 @@ const HomePageContent = (
   </>
 );
 
-// --- Komponen Utama Aplikasi ---
-
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
+  const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
+
+  // DEBUG: Log setiap kali state berubah
+  useEffect(() => {
+    console.log("🔄 Current Page Changed:", currentPage);
+    console.log("📦 Selected Plan:", selectedPlanDetails);
+  }, [currentPage, selectedPlanDetails]);
 
   useEffect(() => {
-    // Setup AOS (Animation on Scroll)
-    // Penambahan dan penghapusan script/link CSS dilakukan di sini
-
     const link = document.createElement("link");
     link.href = "https://unpkg.com/aos@2.3.4/dist/aos.css";
     link.rel = "stylesheet";
@@ -294,23 +282,55 @@ function App() {
       if (document.head.contains(link)) document.head.removeChild(link);
       if (document.body.contains(script)) document.body.removeChild(script);
     };
-  }, []); // [] memastikan hanya berjalan sekali saat mount
+  }, []);
+
+  const handleNavigateToDetail = (plan) => {
+    console.log("🎯 handleNavigateToDetail called with:", plan);
+    setSelectedPlanDetails(plan);
+    setCurrentPage("informasidetail");
+    console.log("✅ State should be updated now");
+  };
+
+  console.log("🖼️ Rendering App with currentPage:", currentPage);
 
   let content;
   switch (currentPage) {
     case "login":
+      console.log("📄 Rendering: Login");
       content = <Login onBackToHome={() => setCurrentPage("home")} />;
       break;
     case "carakerja":
+      console.log("📄 Rendering: CaraKerja");
       content = <CaraKerja onBackToHome={() => setCurrentPage("home")} />;
       break;
     case "register":
+      console.log("📄 Rendering: Register");
       content = <Register onBackToHome={() => setCurrentPage("home")} />;
       break;
     case "harga":
-      content = <Harga onBackToHome={() => setCurrentPage("home")} />;
+      console.log("📄 Rendering: Harga");
+      content = (
+        <Harga
+          onBackToHome={() => setCurrentPage("home")}
+          onSelectPlan={handleNavigateToDetail}
+        />
+      );
+      break;
+    case "informasidetail":
+      console.log(
+        "📄 Rendering: InformasiDetail with plan:",
+        selectedPlanDetails
+      );
+      content = (
+        <InformasiDetail
+          plan={selectedPlanDetails}
+          onBackToHome={() => setCurrentPage("home")}
+          onBackToHarga={() => setCurrentPage("harga")}
+        />
+      );
       break;
     default:
+      console.log("📄 Rendering: Home");
       content = HomePageContent;
   }
 

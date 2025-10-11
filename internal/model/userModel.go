@@ -2,7 +2,6 @@ package model
 
 import (
 	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -27,9 +26,7 @@ type FileInput struct {
 	FileDescription string `json:"filedescription" validate:"required"`
 }
 
-// =======================
-// 🧩 Model User
-// =======================
+
 type User struct {
 	ID                  uint            `json:"id" gorm:"primaryKey"`
 	Username            string          `json:"username" gorm:"uniqueIndex;not null"`
@@ -39,7 +36,7 @@ type User struct {
 	Phone               string          `json:"phone" gorm:"index"`
 	Password            string          `json:"-" gorm:"not null"`
 	GroupID             uint            `json:"group_id" gorm:"default:2;not null;index"`
-	Role                string          `json:"role" gorm:"default:pembeli;size:50"` // pembeli atau developer
+	Role                string          `json:"role" gorm:"default:pembeli;size:50"` 
 	IsAktif             string          `json:"is_aktif" gorm:"default:Y;size:1;not null"`
 	SubscribeNewsletter bool            `json:"subscribe_newsletter" gorm:"default:false"`
 	CreatedAt           *time.Time      `json:"createdAt" gorm:"autoCreateTime"`
@@ -47,15 +44,13 @@ type User struct {
 	DeletedAt           *gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
-// =======================
-// 🧩 Request Structs
-// =======================
+
 type RegisterRequest struct {
 	Username            string `json:"username" binding:"required,min=3"`
 	Email               string `json:"email" binding:"required,email"`
 	Password            string `json:"password" binding:"required,min=8"`
 	ConfirmPassword     string `json:"confirmPassword,omitempty"`
-	Role                string `json:"role"` // pembeli atau developer
+	Role                string `json:"role"` 
 	GroupID             uint   `json:"group_id"`
 	IsAktif             string `json:"is_aktif" binding:"omitempty,oneof=Y N"`
 	FirstName           string `json:"first_name"`
@@ -74,9 +69,7 @@ type LoginWithUsernameRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-// =======================
-// 🧩 Response Structs
-// =======================
+
 type UserResponse struct {
 	ID                  uint       `json:"id"`
 	Username            string     `json:"username"`
@@ -91,16 +84,12 @@ type UserResponse struct {
 	CreatedAt           *time.Time `json:"createdAt"`
 }
 
-// =======================
-// 🧩 TableName
-// =======================
+
 func (User) TableName() string {
 	return "users"
 }
 
-// =======================
-// 🧩 Converters
-// =======================
+
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
 		ID:                  u.ID,
@@ -164,12 +153,12 @@ func (r *RegisterRequest) ToUser() User {
 		groupID = 2
 	}
 
-	// Set default role jika tidak diisi
+	
 	role := r.Role
 	if role == "" {
 		role = "pembeli"
 	}
-	// Validasi role hanya pembeli atau developer
+	
 	if role != "pembeli" && role != "developer" {
 		role = "pembeli"
 	}
@@ -222,9 +211,7 @@ func (r *RegisterRequest) Validate() error {
 	return nil
 }
 
-// =======================
-// 🧩 Validation Errors
-// =======================
+
 var (
 	ErrUsernameRequired  = &ValidationError{Field: "username", Message: "Username wajib diisi"}
 	ErrUsernameMinLength = &ValidationError{Field: "username", Message: "Username minimal 3 karakter"}

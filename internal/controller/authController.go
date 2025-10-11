@@ -5,10 +5,8 @@ import(
 	"log"
 	"net/http"
 	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-ldap/ldap/v3"
-
 	"BackendFramework/internal/config"
 	"BackendFramework/internal/middleware"
 	"BackendFramework/internal/service"
@@ -40,10 +38,9 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// Log untuk debugging
 	log.Printf("📝 Register request - Username: %s, Email: %s, Role: %s", req.Username, req.Email, req.Role)
 
-	// Panggil service register
+	
 	user, err := ctrl.authService.Register(req)
 	if err != nil {
 		log.Printf("❌ Register failed: %v", err)
@@ -98,7 +95,7 @@ func (ctrl *AuthController) LoginWithEmail(c *gin.Context) {
 	})
 }
 
-// LoginWithUsername handles username-based login
+
 func (ctrl *AuthController) LoginWithUsername(c *gin.Context) {
 	var req model.LoginWithUsernameRequest
 	
