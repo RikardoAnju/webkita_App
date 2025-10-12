@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X, LogOut, Settings, User } from "lucide-react";
 
-export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick, onNavigateHome, onHargaClick }) {
+export default function Navbar({
+  onLoginClick,
+  onRegisterClick,
+  onCaraKerjaClick,
+  onNavigateHome,
+  onHargaClick,
+  onOrderanClick,
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  // Cek status login saat component mount
   useEffect(() => {
     const accessToken = sessionStorage.getItem("accessToken");
     const email = sessionStorage.getItem("userEmail");
-    
+
     if (accessToken) {
       setIsLoggedIn(true);
       setUserEmail(email || "User");
@@ -21,12 +27,11 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
   }, []);
 
   const handleLogout = () => {
-    // Hapus token dari sessionStorage
     sessionStorage.removeItem("accessToken");
     sessionStorage.removeItem("refreshToken");
     sessionStorage.removeItem("userId");
     sessionStorage.removeItem("userEmail");
-    
+
     setIsLoggedIn(false);
     setProfileMenuOpen(false);
     window.location.href = "/";
@@ -38,10 +43,26 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
   };
 
   const navLinks = [
-    { name: "Beranda", onClick: onNavigateHome || (() => window.location.href = "/") },
+    {
+      name: "Beranda",
+      onClick: onNavigateHome || (() => (window.location.href = "/")),
+    },
     { name: "Cara Kerja", onClick: onCaraKerjaClick || (() => {}) },
     { name: "Harga", onClick: onHargaClick || (() => {}) },
   ];
+
+  const loggedInNavLinks = [
+    {
+      name: "Beranda",
+      onClick: onNavigateHome || (() => (window.location.href = "/")),
+    },
+    
+    { name: "Cara Kerja", onClick: onCaraKerjaClick || (() => {}) },
+    { name: "Orderan", onClick: onOrderanClick || (() => {}) },
+    { name: "Harga", onClick: onHargaClick || (() => {}) },
+  ];
+
+  const currentNavLinks = isLoggedIn ? loggedInNavLinks : navLinks;
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
@@ -49,14 +70,14 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
         <div className="flex items-center justify-between">
           <div
             className="text-2xl font-bold text-gray-900 cursor-pointer"
-            onClick={onNavigateHome || (() => window.location.href = "/")}
+            onClick={onNavigateHome || (() => (window.location.href = "/"))}
           >
             Webkita
           </div>
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center space-x-8">
-            {navLinks.map((link) => (
+            {currentNavLinks.map((link) => (
               <button
                 key={link.name}
                 onClick={link.onClick}
@@ -70,20 +91,25 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
             {!isLoggedIn ? (
               <>
                 <button
-                  onClick={onLoginClick || (() => window.location.href = "/login")}
+                  onClick={
+                    onLoginClick || (() => (window.location.href = "/login"))
+                  }
                   className="text-gray-700 hover:text-blue-600 transition font-medium px-6 py-2"
                 >
                   Masuk
                 </button>
                 <button
-                  onClick={onRegisterClick || (() => window.location.href = "/register")}
+                  onClick={
+                    onRegisterClick ||
+                    (() => (window.location.href = "/register"))
+                  }
                   className="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-gray-800 transition"
                 >
                   Daftar
                 </button>
               </>
             ) : (
-              /* Jika sudah login - Profile Icon */
+            
               <div className="relative">
                 <button
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
@@ -96,7 +122,9 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
                 {profileMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
                     <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">{userEmail}</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {userEmail}
+                      </p>
                     </div>
                     <button
                       onClick={handleProfile}
@@ -133,14 +161,17 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
             className="lg:hidden p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
-        {/* Mobile Menu Content */}
         {mobileMenuOpen && (
           <div className="lg:hidden mt-4 pb-4 space-y-3 border-t pt-4">
-            {navLinks.map((link) => (
+            {currentNavLinks.map((link) => (
               <button
                 key={link.name}
                 onClick={() => {
@@ -153,7 +184,6 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
               </button>
             ))}
 
-            {/* Mobile - Jika belum login */}
             {!isLoggedIn ? (
               <>
                 <button
@@ -184,10 +214,11 @@ export default function Navbar({ onLoginClick, onRegisterClick, onCaraKerjaClick
                 </button>
               </>
             ) : (
-              /* Mobile - Jika sudah login */
               <>
                 <div className="py-3 border-t border-gray-200 pt-4">
-                  <p className="text-sm font-semibold text-gray-900 px-2 mb-3">{userEmail}</p>
+                  <p className="text-sm font-semibold text-gray-900 px-2 mb-3">
+                    {userEmail}
+                  </p>
                   <button
                     onClick={() => {
                       window.location.href = "/profile";

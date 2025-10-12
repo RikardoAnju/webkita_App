@@ -298,17 +298,17 @@ const Harga = ({ onBackToHome, onSelectPlan }) => {
 
   const handleCardClick = (plan) => {
     if (!isLoggedIn) {
-      console.log("⚠️ User belum login, menampilkan modal login");
+      console.log(" User belum login, menampilkan modal login");
       setIsLoginPromptOpen(true);
       return;
     }
-    console.log("📋 Membuka detail paket:", plan.title);
+    console.log(" Membuka detail paket:", plan.title);
     setSelectedPlan(plan);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    console.log("❌ Menutup modal");
+    console.log(" Menutup modal");
     setIsModalOpen(false);
     setTimeout(() => setSelectedPlan(null), 300);
   };
@@ -319,39 +319,47 @@ const Harga = ({ onBackToHome, onSelectPlan }) => {
   };
 
   const handleSelectPlan = (plan) => {
-    console.log("✅ Paket dipilih:", plan.title);
-    
+    console.log(" Paket dipilih:", plan.title);
+
     // Debug: Cek semua item di storage
-    console.log("🔍 Debug Storage:");
+    console.log(" Debug Storage:");
     console.log("  - sessionStorage.userId:", sessionStorage.getItem("userId"));
     console.log("  - localStorage.userId:", localStorage.getItem("userId"));
-    console.log("  - sessionStorage.accessToken:", sessionStorage.getItem("accessToken"));
-    console.log("  - localStorage.accessToken:", localStorage.getItem("accessToken"));
-    
-    // Coba ambil dari berbagai kemungkinan key
-    const userId = 
-      sessionStorage.getItem("userId") || 
+    console.log(
+      "  - sessionStorage.accessToken:",
+      sessionStorage.getItem("accessToken")
+    );
+    console.log(
+      "  - localStorage.accessToken:",
+      localStorage.getItem("accessToken")
+    );
+    const userId =
+      sessionStorage.getItem("userId") ||
       localStorage.getItem("userId") ||
       sessionStorage.getItem("user_id") ||
       localStorage.getItem("user_id");
-    
+
     console.log("🔍 User ID ditemukan:", userId);
     console.log("🔍 Tipe data userId:", typeof userId);
-    
+
     if (!userId || userId === "null" || userId === "undefined") {
-      console.error("❌ User ID tidak ditemukan!");
-      console.error("💡 Tip: Pastikan saat login, userId disimpan dengan:");
-      console.error("   sessionStorage.setItem('userId', response.data.userId);");
-      alert("User ID tidak ditemukan. Silakan login kembali.\n\nJika masalah berlanjut, hubungi administrator.");
+      console.error(" User ID tidak ditemukan!");
+      console.error(" Tip: Pastikan saat login, userId disimpan dengan:");
+      console.error(
+        "   sessionStorage.setItem('userId', response.data.userId);"
+      );
+      alert(
+        "User ID tidak ditemukan. Silakan login kembali.\n\nJika masalah berlanjut, hubungi administrator."
+      );
       return;
     }
+
     
-    // Tambahkan userId ke dalam data plan
     const planWithUserId = {
       ...plan,
-      userId: parseInt(userId), // Pastikan userId dalam format number
+      userId: parseInt(userId), 
     };
-    
+
     console.log("📦 Data paket yang dikirim:", {
       title: planWithUserId.title,
       tier: planWithUserId.tier,
@@ -363,24 +371,22 @@ const Harga = ({ onBackToHome, onSelectPlan }) => {
       userId: planWithUserId.userId,
     });
 
-    // Tutup modal terlebih dahulu
     setIsModalOpen(false);
     setSelectedPlan(null);
 
-    // Cek apakah onSelectPlan tersedia
-    console.log("🔍 Checking onSelectPlan:", typeof onSelectPlan);
+    console.log(" Checking onSelectPlan:", typeof onSelectPlan);
 
     if (typeof onSelectPlan === "function") {
-      console.log("✅ Mengirim data ke InformasiDetail...");
+      console.log(" Mengirim data ke InformasiDetail...");
       try {
         onSelectPlan(planWithUserId);
-        console.log("✅ Data berhasil dikirim!");
+        console.log(" Data berhasil dikirim!");
       } catch (error) {
-        console.error("❌ Error saat mengirim data:", error);
+        console.error(" Error saat mengirim data:", error);
         alert("Terjadi kesalahan saat memproses paket. Silakan coba lagi.");
       }
     } else {
-      console.error("❌ onSelectPlan function tidak tersedia!");
+      console.error(" onSelectPlan function tidak tersedia!");
       alert("Terjadi kesalahan sistem. Function onSelectPlan tidak ditemukan.");
     }
   };
@@ -628,17 +634,6 @@ const Harga = ({ onBackToHome, onSelectPlan }) => {
               <ArrowRight className="ml-2 w-5 h-5" />
             </a>
           </div>
-
-          {onBackToHome && (
-            <div className="text-center mt-16">
-              <button
-                onClick={onBackToHome}
-                className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition shadow-lg"
-              >
-                Kembali ke Beranda
-              </button>
-            </div>
-          )}
         </div>
       </main>
 

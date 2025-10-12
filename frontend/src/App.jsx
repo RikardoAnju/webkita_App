@@ -15,6 +15,7 @@ import Login from "./page/login";
 import CaraKerja from "./page/carakerja";
 import Harga from "./page/harga";
 import Register from "./page/register";
+import Orderan from "./page/orderan";
 import InformasiDetail from "./page/informasiDetail";
 
 const ServiceCard = ({ icon: Icon, title, description, delay }) => (
@@ -285,30 +286,34 @@ function App() {
   }, []);
 
   const handleNavigateToDetail = (plan) => {
-    console.log("🎯 handleNavigateToDetail called with:", plan);
+    console.log(" handleNavigateToDetail called with:", plan);
     setSelectedPlanDetails(plan);
     setCurrentPage("informasidetail");
-    console.log("✅ State should be updated now");
+    console.log(" State should be updated now");
   };
 
-  console.log("🖼️ Rendering App with currentPage:", currentPage);
+  console.log(" Rendering App with currentPage:", currentPage);
 
   let content;
   switch (currentPage) {
     case "login":
-      console.log("📄 Rendering: Login");
+      console.log(" Rendering: Login");
       content = <Login onBackToHome={() => setCurrentPage("home")} />;
       break;
     case "carakerja":
-      console.log("📄 Rendering: CaraKerja");
+      console.log(" Rendering: CaraKerja");
       content = <CaraKerja onBackToHome={() => setCurrentPage("home")} />;
       break;
+    case "orderan":
+      console.log(" Rendering: orderan");
+      content = <Orderan onBackToHome={() => setCurrentPage("home")} />;
+      break;
     case "register":
-      console.log("📄 Rendering: Register");
+      console.log(" Rendering: Register");
       content = <Register onBackToHome={() => setCurrentPage("home")} />;
       break;
     case "harga":
-      console.log("📄 Rendering: Harga");
+      console.log(" Rendering: Harga");
       content = (
         <Harga
           onBackToHome={() => setCurrentPage("home")}
@@ -318,7 +323,7 @@ function App() {
       break;
     case "informasidetail":
       console.log(
-        "📄 Rendering: InformasiDetail with plan:",
+        " Rendering: InformasiDetail with plan:",
         selectedPlanDetails
       );
       content = (
@@ -330,7 +335,7 @@ function App() {
       );
       break;
     default:
-      console.log("📄 Rendering: Home");
+      console.log(" Rendering: Home");
       content = HomePageContent;
   }
 
@@ -341,6 +346,7 @@ function App() {
       onHargaClick={() => setCurrentPage("harga")}
       onNavigateHome={() => setCurrentPage("home")}
       onRegisterClick={() => setCurrentPage("register")}
+      onOrderanClick={() => setCurrentPage("orderan")}
       currentPage={currentPage}
     >
       {content}

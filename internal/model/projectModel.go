@@ -27,55 +27,55 @@ func (Project) TableName() string {
 
 // GORM Hooks for debugging
 func (p *Project) BeforeCreate(tx *gorm.DB) (err error) {
-    log.Println("🪝 HOOK: BeforeCreate called")
+    log.Println(" HOOK: BeforeCreate called")
     log.Printf("   UserID: %d", p.UserID)
     log.Printf("   ProjectTitle: %s", p.ProjectTitle)
     log.Printf("   Category: %s", p.Category)
     log.Printf("   Status: %s", p.Status)
     
-    // Verify UserID exists in users table
+    
     var userExists bool
     err = tx.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ? AND deleted_at IS NULL)", p.UserID).Scan(&userExists).Error
     if err != nil {
-        log.Printf("❌ HOOK: Error checking user existence: %v", err)
+        log.Printf(" HOOK: Error checking user existence: %v", err)
         return err
     }
     
     if !userExists {
-        log.Printf("❌ HOOK: User %d does not exist!", p.UserID)
+        log.Printf(" HOOK: User %d does not exist!", p.UserID)
         return gorm.ErrRecordNotFound
     }
     
-    log.Printf("✅ HOOK: User %d exists", p.UserID)
+    log.Printf(" HOOK: User %d exists", p.UserID)
     return nil
 }
 
 func (p *Project) AfterCreate(tx *gorm.DB) (err error) {
-    log.Println("🪝 HOOK: AfterCreate called")
+    log.Println(" HOOK: AfterCreate called")
     log.Printf("   Project ID after insert: %d", p.ID)
     log.Printf("   Created At: %v", p.CreatedAt)
     
-    // Verify the record actually exists in database
+
     var count int64
     tx.Model(&Project{}).Where("id = ?", p.ID).Count(&count)
     log.Printf("   Records found with ID %d: %d", p.ID, count)
     
     if count == 0 {
-        log.Println("❌ HOOK: CRITICAL - Record not found after insert!")
+        log.Println(" HOOK: CRITICAL - Record not found after insert!")
     } else {
-        log.Println("✅ HOOK: Record verified in database")
+        log.Println(" HOOK: Record verified in database")
     }
     
     return nil
 }
 
 func (p *Project) BeforeSave(tx *gorm.DB) (err error) {
-    log.Println("🪝 HOOK: BeforeSave called")
+    log.Println(" HOOK: BeforeSave called")
     return nil
 }
 
 func (p *Project) AfterSave(tx *gorm.DB) (err error) {
-    log.Println("🪝 HOOK: AfterSave called")
+    log.Println(" HOOK: AfterSave called")
     return nil
 }
 

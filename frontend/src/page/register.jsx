@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   ArrowLeft,
   Eye,
@@ -9,8 +9,73 @@ import {
   Phone,
   AlertCircle,
   CheckCircle,
-  XCircle,
 } from "lucide-react";
+
+// Komponen Password Input di luar agar tidak re-create setiap render
+const PasswordInputWithValidation = React.memo(({
+  id,
+  label,
+  value,
+  onChange,
+  disabled,
+  show,
+  toggleShow,
+  isValid,
+}) => (
+  <div>
+    <label
+      htmlFor={id}
+      className="block text-sm font-semibold text-gray-700 mb-2"
+    >
+      {label} <span className="text-red-500">*</span>
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Lock className="h-5 w-5 text-gray-400" />
+      </div>
+      <input
+        id={id}
+        name={id}
+        type={show ? "text" : "password"}
+        required
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        className={`block w-full pl-10 ${
+          isValid ? "pr-20" : "pr-12"
+        } py-3 border rounded-lg focus:ring-2 transition disabled:bg-gray-100 disabled:cursor-not-allowed ${
+          isValid
+            ? "border-green-400 focus:ring-green-500"
+            : value.length > 0
+            ? "border-red-400 focus:ring-red-500"
+            : "border-gray-300 focus:ring-blue-500"
+        }`}
+        placeholder={
+          id === "password" ? "Minimal 8 karakter" : "Ulangi password"
+        }
+      />
+      <div className="absolute inset-y-0 right-0 flex items-center">
+        {isValid && (
+          <div className="pr-2 flex items-center pointer-events-none">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={toggleShow}
+          disabled={disabled}
+          className="pr-3 flex items-center disabled:cursor-not-allowed hover:opacity-70 transition"
+        >
+          {show ? (
+            <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+          ) : (
+            <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+));
 
 function Register({ onBackToHome }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -43,24 +108,11 @@ function Register({ onBackToHome }) {
     if (error) setError("");
   };
 
-  // --- Fungsi Validasi Individual untuk Checkmark ---
-  const isUsernameValid = useMemo(() => {
-    return formData.username.trim().length >= 3;
-  }, [formData.username]);
-
-  const isEmailValid = useMemo(() => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(formData.email.trim());
-  }, [formData.email]);
-
-  const isPasswordValid = useMemo(() => {
-    return formData.password.length >= 8;
-  }, [formData.password]);
-
-  const isConfirmPasswordValid = useMemo(() => {
-    return formData.password.length >= 8 && formData.password === formData.confirmPassword;
-  }, [formData.password, formData.confirmPassword]);
-  // ----------------------------------------------------
+  // Validasi sederhana tanpa useMemo
+  const isUsernameValid = formData.username.trim().length >= 3;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
+  const isPasswordValid = formData.password.length >= 8;
+  const isConfirmPasswordValid = formData.password.length >= 8 && formData.password === formData.confirmPassword;
 
   const validateForm = () => {
     if (!isUsernameValid) {
@@ -121,7 +173,7 @@ function Register({ onBackToHome }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(registerData),
       });
@@ -146,7 +198,9 @@ function Register({ onBackToHome }) {
             "Endpoint registrasi tidak ditemukan. Pastikan API berjalan dengan benar."
           );
         }
-        const apiErrorMessage = result.errors ? Object.values(result.errors).flat().join('; ') : result.message;
+        const apiErrorMessage = result.errors
+          ? Object.values(result.errors).flat().join("; ")
+          : result.message;
         throw new Error(
           apiErrorMessage || `Registrasi gagal (${response.status})`
         );
@@ -195,89 +249,6 @@ function Register({ onBackToHome }) {
     }
   };
 
-  const InputWithValidation = ({ id, label, icon: Icon, isValid, ...props }) => (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-semibold text-gray-700 mb-2"
-      >
-        {label} {props.required && <span className="text-red-500">*</span>}
-      </label>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Icon className="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          id={id}
-          name={id}
-          {...props}
-          className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 transition disabled:bg-gray-100 disabled:cursor-not-allowed ${
-            isValid
-              ? 'border-green-400 focus:ring-green-500'
-              : props.value.length > 0 && props.required && id !== 'confirmPassword' && id !== 'password'
-                ? 'border-red-400 focus:ring-red-500'
-                : 'border-gray-300 focus:ring-blue-500'
-          }`}
-        />
-        {isValid && (
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const PasswordInputWithValidation = ({ id, label, value, onChange, disabled, show, toggleShow, isValid }) => (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-semibold text-gray-700 mb-2"
-      >
-        {label} <span className="text-red-500">*</span>
-      </label>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Lock className="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          id={id}
-          name={id}
-          type={show ? "text" : "password"}
-          required
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
-          className={`block w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 transition disabled:bg-gray-100 disabled:cursor-not-allowed ${
-            isValid
-              ? 'border-green-400 focus:ring-green-500'
-              : value.length > 0
-                ? 'border-red-400 focus:ring-red-500'
-                : 'border-gray-300 focus:ring-blue-500'
-          }`}
-          placeholder={id === 'password' ? "Minimal 8 karakter" : "Ulangi password"}
-        />
-        <button
-          type="button"
-          onClick={toggleShow}
-          disabled={disabled}
-          className="absolute inset-y-0 right-0 pr-10 flex items-center disabled:cursor-not-allowed"
-        >
-          {show ? (
-            <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-          ) : (
-            <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-          )}
-        </button>
-        {isValid && (
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
       {/* Modal Sukses dengan Centang Hijau */}
@@ -299,7 +270,8 @@ function Register({ onBackToHome }) {
               Registrasi Berhasil!
             </h3>
             <p className="text-gray-600 mb-6">
-              Akun Anda telah berhasil dibuat. Silakan login dengan kredensial Anda.
+              Akun Anda telah berhasil dibuat. Silakan login dengan kredensial
+              Anda.
             </p>
 
             {/* Countdown Timer */}
@@ -381,10 +353,10 @@ function Register({ onBackToHome }) {
                   placeholder="Masukkan username Anda (minimal 3 karakter)"
                   className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed ${
                     isUsernameValid
-                      ? 'border-green-400 focus:ring-green-500'
+                      ? "border-green-400 focus:ring-green-500"
                       : formData.username.length > 0
-                        ? 'border-red-400 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-blue-500'
+                      ? "border-red-400 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-blue-500"
                   }`}
                 />
                 {isUsernameValid && (
@@ -467,10 +439,10 @@ function Register({ onBackToHome }) {
                   placeholder="Masukkan alamat email Anda (contoh: nama@email.com)"
                   className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed ${
                     isEmailValid
-                      ? 'border-green-400 focus:ring-green-500'
+                      ? "border-green-400 focus:ring-green-500"
                       : formData.email.length > 0
-                        ? 'border-red-400 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-blue-500'
+                      ? "border-red-400 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-blue-500"
                   }`}
                 />
                 {isEmailValid && (
@@ -485,9 +457,7 @@ function Register({ onBackToHome }) {
                 </p>
               )}
               {isEmailValid && (
-                <p className="text-xs text-green-500 mt-1">
-                  ✓ Email valid
-                </p>
+                <p className="text-xs text-green-500 mt-1">✓ Email valid</p>
               )}
             </div>
 

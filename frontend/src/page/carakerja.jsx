@@ -14,8 +14,6 @@ import {
   CheckSquare,
 } from "lucide-react";
 
-// --- Konstanta ---
-
 const STEP_TYPES = {
   START: "start",
   PROCESS: "process",
@@ -139,7 +137,6 @@ const CaraKerja = ({ onBackToHome }) => {
     }
   };
 
-  // --- Komponen StepCard (Sub-Komponen) ---
   const StepCard = ({ step }) => {
     const Icon = step.icon;
     const iconStyle = getIconColor(step.type);
@@ -153,14 +150,13 @@ const CaraKerja = ({ onBackToHome }) => {
         <div className={`p-4 rounded-full inline-flex mb-4 ${iconStyle}`}>
           <Icon className="w-6 h-6" />
         </div>
-        
+
         {/* Content */}
         <h3 className="text-xl font-bold text-gray-900 mb-3">
           {step.id}. {step.title}
         </h3>
         <p className="text-gray-600">{step.description}</p>
-        
-        {/* Tambahan untuk alur Keputusan */}
+
         {step.type === STEP_TYPES.DECISION && (
           <div className="mt-4 space-y-2 text-sm font-medium text-gray-700 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <p className="flex items-center">
@@ -173,8 +169,7 @@ const CaraKerja = ({ onBackToHome }) => {
             </p>
           </div>
         )}
-        
-        {/* Tambahan untuk alur Revisi */}
+
         {step.type === STEP_TYPES.REVISION && (
           <div className="mt-4 text-sm font-semibold p-4 bg-orange-50 rounded-lg border border-orange-200">
             <p className="text-orange-600 flex items-center">
@@ -192,7 +187,6 @@ const CaraKerja = ({ onBackToHome }) => {
       {/* Konten Halaman Cara Kerja */}
       <section className="py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
           {/* Header */}
           <div className="text-center mb-12 lg:mb-16" data-aos="fade-up">
             <div className="inline-block mb-4">
@@ -204,29 +198,17 @@ const CaraKerja = ({ onBackToHome }) => {
               Cara Kerja Kami
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Langkah demi langkah dalam proses pengembangan website
-              profesional bersama Webkita.
+              Langkah demi langkah dalam proses pengembangan website profesional
+              bersama Webkita.
             </p>
           </div>
-          
+
           {/* Grid Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {stepsData.map((step) => (
               <StepCard key={step.id} step={step} />
             ))}
           </div>
-
-          {/* Tombol kembali ke Beranda */}
-          {onBackToHome && (
-            <div className="text-center mt-12">
-              <button
-                onClick={onBackToHome}
-                className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition shadow-lg"
-              >
-                Kembali ke Beranda
-              </button>
-            </div>
-          )}
         </div>
       </section>
     </div>
