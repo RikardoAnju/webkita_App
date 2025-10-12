@@ -12,7 +12,7 @@ import (
 func init() {
     // Load .env file di root project
     if err := godotenv.Load(); err != nil {
-        log.Println("⚠️  Tidak bisa load .env, pakai environment system")
+        log.Println("  Tidak bisa load .env, pakai environment system")
     }
     
     log.Println("🔧 Initializing configuration...")

@@ -8,6 +8,7 @@ export default function Navbar({
   onNavigateHome,
   onHargaClick,
   onOrderanClick,
+  onProfileClick,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -39,7 +40,11 @@ export default function Navbar({
 
   const handleProfile = () => {
     setProfileMenuOpen(false);
-    window.location.href = "/profile";
+    if (onProfileClick) {
+      onProfileClick();
+    } else {
+      window.location.href = "/profile";
+    }
   };
 
   const navLinks = [
@@ -221,8 +226,8 @@ export default function Navbar({
                   </p>
                   <button
                     onClick={() => {
-                      window.location.href = "/profile";
                       setMobileMenuOpen(false);
+                      handleProfile();
                     }}
                     className="w-full text-left text-gray-700 hover:text-blue-600 transition font-medium py-2 px-2 flex items-center gap-2"
                   >

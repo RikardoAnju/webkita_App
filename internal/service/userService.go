@@ -145,7 +145,29 @@ func InsertUser(userData *model.UserInput) error {
 	return nil
 }
 
-// CreateUser menambahkan user baru menggunakan RegisterRequest
+// GetCurrentUserProfile mengambil profil user yang sedang login berdasarkan user ID dari JWT
+func GetCurrentUserProfile(userID uint) (*model.User, error) {
+	if userID == 0 {
+		return nil, errors.New("user ID cannot be zero")
+	}
+
+	var user model.User
+
+	err := database.DbWebkita.
+		Where("id = ? AND deleted_at IS NULL AND is_aktif = ?", userID, "Y").
+		First(&user).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("user not found with ID: %d", userID)
+		}
+		middleware.LogError(err, fmt.Sprintf("Get Current User Profile Failed for ID %d", userID))
+		return nil, fmt.Errorf("failed to get user profile: %w", err)
+	}
+
+	return &user, nil
+}
+
 func CreateUser(user *model.User) error {
 	if user == nil {
 		return errors.New("user data cannot be nil")

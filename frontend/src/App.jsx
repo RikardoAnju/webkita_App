@@ -16,6 +16,7 @@ import CaraKerja from "./page/carakerja";
 import Harga from "./page/harga";
 import Register from "./page/register";
 import Orderan from "./page/orderan";
+import ProfilePage from "./page/profile";
 import InformasiDetail from "./page/informasiDetail";
 
 const ServiceCard = ({ icon: Icon, title, description, delay }) => (
@@ -251,10 +252,10 @@ function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
 
-  // DEBUG: Log setiap kali state berubah
+  
   useEffect(() => {
-    console.log("🔄 Current Page Changed:", currentPage);
-    console.log("📦 Selected Plan:", selectedPlanDetails);
+    console.log(" Current Page Changed:", currentPage);
+    console.log(" Selected Plan:", selectedPlanDetails);
   }, [currentPage, selectedPlanDetails]);
 
   useEffect(() => {
@@ -308,6 +309,10 @@ function App() {
       console.log(" Rendering: orderan");
       content = <Orderan onBackToHome={() => setCurrentPage("home")} />;
       break;
+    case "profile":
+      console.log(" Rendering: profile");
+      content = <ProfilePage onBackToHome={() => setCurrentPage("home")} />;
+      break;
     case "register":
       console.log(" Rendering: Register");
       content = <Register onBackToHome={() => setCurrentPage("home")} />;
@@ -347,6 +352,7 @@ function App() {
       onNavigateHome={() => setCurrentPage("home")}
       onRegisterClick={() => setCurrentPage("register")}
       onOrderanClick={() => setCurrentPage("orderan")}
+      onProfileClick= {() => setCurrentPage("profile") }
       currentPage={currentPage}
     >
       {content}

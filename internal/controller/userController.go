@@ -79,6 +79,27 @@ func GetUserByEmail(c *gin.Context) {
 	})
 }
 
+// GET /auth/me atau /user/profile
+func GetMyProfile(c *gin.Context) {
+	// Ambil user ID dari JWT claims (sudah di-set oleh middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(401, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	user, err := service.GetCurrentUserProfile(userID.(uint))
+	if err != nil {
+		c.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"status": "success",
+		"data":   user.ToResponse(),
+	})
+}
+
 // InsertUser menambahkan user baru
 func InsertUser(c *gin.Context) {
 	// Get validated input from middleware
@@ -242,7 +263,6 @@ func HardDeleteUser(c *gin.Context) {
 	})
 }
 
-
 func RestoreUser(c *gin.Context) {
 	usrId := c.Param("usrId")
 	if usrId == "" {
@@ -272,9 +292,8 @@ func RestoreUser(c *gin.Context) {
 	})
 }
 
-
 func GetUserProfile(c *gin.Context) {
-	
+
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -326,8 +345,6 @@ func UpdateUserPassword(c *gin.Context) {
 		})
 		return
 	}
-
-	
 
 	err := service.UpdateUserPassword(input.Username, input.NewPassword)
 	if err != nil {

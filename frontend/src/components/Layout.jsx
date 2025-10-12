@@ -9,6 +9,7 @@ import Footer from "./Footer";
  * @param {function} props.onLoginClick
  * @param {function} props.onCaraKerjaClick
  * @param {function} props.onNavigateHome
+ * @param {function} props.onProfileClick
  * @param {function} props.onHargaClick
  * @param {function} props.onRegisterClick
  * @param {function} props.onOrderanClick
@@ -20,13 +21,14 @@ export default function Layout({
   onCaraKerjaClick,
   onNavigateHome,
   onRegisterClick,
+  onProfileClick,
   onHargaClick,
   onOrderanClick,
   currentPage,
 }) {
-  const hideNavAndFooter = ["login", "register"];
+  const hideNavAndFooter = ["login", "register" , "profile"];
   const shouldHide = hideNavAndFooter.includes(currentPage);
-
+  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {!shouldHide && (
@@ -35,6 +37,7 @@ export default function Layout({
           onCaraKerjaClick={onCaraKerjaClick}
           onNavigateHome={onNavigateHome}
           onHargaClick={onHargaClick}
+          onProfileClick={onProfileClick}
           onOrderanClick={onOrderanClick}
           onRegisterClick={onRegisterClick}
         />
