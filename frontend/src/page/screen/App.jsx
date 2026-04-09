@@ -1,7 +1,7 @@
 // src/page/screen/App.jsx
 import React, { useState } from "react";
 import Layout from "../../components/Layout";
-import { UserProvider } from "../../provider/UserProvider";
+import { UserProvider } from "../../provider/user_provider";
 
 // Import Halaman
 import Home from "../home/Home"; // File baru
