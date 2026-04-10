@@ -1,10 +1,7 @@
-// src/page/screen/App.jsx
 import React, { useState } from "react";
 import Layout from "../../components/Layout";
 import { UserProvider } from "../../provider/user_provider";
-
-// Import Halaman
-import Home from "../home/Home"; // File baru
+import Home from "../home/Home";
 import Login from "../auth/login";
 import Register from "../auth/register";
 import ProfilePage from "../profile/profile";
@@ -12,18 +9,26 @@ import CaraKerja from "../carakerja";
 import Harga from "../harga";
 import Orderan from "../orderan";
 import InformasiDetail from "../informasiDetail";
+import VerifyEmail from "../auth/VerifyEmail";
 
 function App() {
+  const path = window.location.pathname;
+  if (path === "/auth/verify-email") {
+    return (
+      <UserProvider>
+        <VerifyEmail onGoToLogin={() => window.location.href = "/"} />
+      </UserProvider>
+    );
+  }
+
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
 
-  // Fungsi navigasi detail
   const handleNavigateToDetail = (plan) => {
     setSelectedPlanDetails(plan);
     setCurrentPage("informasidetail");
   };
 
-  // Logika Switch Content (Tetap di sini atau dipisah ke komponen Helper)
   const renderContent = () => {
     switch (currentPage) {
       case "login": return <Login onBackToHome={() => setCurrentPage("home")} />;
