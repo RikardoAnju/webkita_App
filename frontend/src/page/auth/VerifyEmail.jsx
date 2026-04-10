@@ -14,15 +14,12 @@ function VerifyEmail({ onGoToLogin }) {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const emailParam = params.get("email");
-
     if (!token || !emailParam) {
       setStatus("error");
       setMessage("Link verifikasi tidak valid atau sudah kadaluarsa.");
       return;
     }
-
     setEmail(emailParam);
-
     verifyEmail(token, emailParam).then((result) => {
       if (result.success) {
         setStatus("success");
@@ -48,62 +45,126 @@ function VerifyEmail({ onGoToLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center border border-gray-100">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
 
-        {/* Loading */}
-        {status === "loading" && (
-          <>
-            <Loader className="w-16 h-16 text-blue-500 animate-spin mx-auto mb-6" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Memverifikasi email...</h2>
-            <p className="text-gray-500 text-sm">Mohon tunggu sebentar.</p>
-          </>
-        )}
+        {/* Logo / Brand */}
+        <div className="text-center mb-8">
+          <span className="text-2xl font-bold text-gray-900 tracking-tight">Webkita</span>
+          <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Platform Teknologi #1</p>
+        </div>
 
-        {/* Success */}
-        {status === "success" && (
-          <>
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Verifikasi Berhasil!</h2>
-            <p className="text-gray-500 text-sm mb-8">{message}</p>
-            <button
-              onClick={onGoToLogin}
-              className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition"
-            >
-              Lanjut ke Login
-            </button>
-          </>
-        )}
+        {/* Card */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-        {/* Error */}
-        {status === "error" && (
-          <>
-            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Verifikasi Gagal</h2>
-            <p className="text-gray-500 text-sm mb-8">{message}</p>
+          {/* Accent bar */}
+          <div
+            className="h-1 w-full"
+            style={{ background: "linear-gradient(90deg,#111827 0%,#2563EB 60%,#93c5fd 100%)" }}
+          />
 
-            {/* Resend button */}
-            <button
-              onClick={handleResend}
-              disabled={resendLoading}
-              className="w-full flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition disabled:opacity-50 mb-3"
-            >
-              <RefreshCw className={`w-4 h-4 ${resendLoading ? "animate-spin" : ""}`} />
-              {resendLoading ? "Mengirim..." : "Kirim Ulang Email Verifikasi"}
-            </button>
+          <div className="p-10 text-center">
 
-            {resendMessage && (
-              <p className="text-sm text-gray-500 mt-2">{resendMessage}</p>
+            {/* Loading */}
+            {status === "loading" && (
+              <>
+                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6">
+                  <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                  Memproses
+                </p>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Memverifikasi email...</h2>
+                <p className="text-gray-400 text-sm">Mohon tunggu sebentar.</p>
+              </>
             )}
 
-            <button
-              onClick={onGoToLogin}
-              className="w-full mt-3 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition"
-            >
-              Kembali ke Login
-            </button>
-          </>
-        )}
+            {/* Success */}
+            {status === "success" && (
+              <>
+                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                  Selesai
+                </p>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Verifikasi Berhasil!</h2>
+                <p className="text-gray-400 text-sm mb-8">{message}</p>
+
+                {/* Stats strip */}
+                <div className="grid grid-cols-3 bg-gray-50 rounded-xl border border-gray-100 mb-8 text-left overflow-hidden">
+                  <div className="px-4 py-3 border-r border-gray-100">
+                    <p className="text-xs text-gray-400">Pengguna Aktif</p>
+                    <p className="text-sm font-bold text-gray-900 mt-0.5">100k+</p>
+                  </div>
+                  <div className="px-4 py-3 border-r border-gray-100">
+                    <p className="text-xs text-gray-400">Respon Cepat</p>
+                    <p className="text-sm font-bold text-gray-900 mt-0.5">&lt; 24 Jam</p>
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="text-xs text-gray-400">Garansi</p>
+                    <p className="text-sm font-bold text-gray-900 mt-0.5">Keamanan</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onGoToLogin}
+                  className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition text-sm"
+                >
+                  Mulai Sekarang →
+                </button>
+              </>
+            )}
+
+            {/* Error */}
+            {status === "error" && (
+              <>
+                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6">
+                  <XCircle className="w-8 h-8 text-red-500" />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                  Gagal
+                </p>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Verifikasi Gagal</h2>
+                <p className="text-gray-400 text-sm mb-8">{message}</p>
+
+                {/* Info box */}
+                <div className="text-left bg-blue-50 border-l-2 border-blue-600 rounded-r-lg px-4 py-3 mb-6">
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    Link verifikasi berlaku <strong>24 jam</strong> sejak email dikirim.
+                    Kamu bisa kirim ulang email baru di bawah.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleResend}
+                  disabled={resendLoading}
+                  className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition disabled:opacity-50 text-sm mb-3"
+                >
+                  <RefreshCw className={`w-4 h-4 ${resendLoading ? "animate-spin" : ""}`} />
+                  {resendLoading ? "Mengirim..." : "Kirim Ulang Email Verifikasi"}
+                </button>
+
+                {resendMessage && (
+                  <p className="text-xs text-gray-500 mb-3">{resendMessage}</p>
+                )}
+
+                <button
+                  onClick={onGoToLogin}
+                  className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition text-sm"
+                >
+                  Kembali ke Login
+                </button>
+              </>
+            )}
+
+          </div>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-300 mt-6">
+          © 2026 Webkita · Hubungkan Bisnis Anda dengan Developer Terbaik
+        </p>
 
       </div>
     </div>
