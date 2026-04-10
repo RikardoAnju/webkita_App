@@ -49,11 +49,7 @@ function VerifyEmail({ onGoToLogin }) {
       <div className="w-full max-w-md">
 
         {/* Logo / Brand */}
-        <div className="text-center mb-8">
-          <span className="text-2xl font-bold text-gray-900 tracking-tight">Webkita</span>
-          <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Platform Teknologi #1</p>
-        </div>
-
+      
         {/* Card */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
@@ -92,21 +88,6 @@ function VerifyEmail({ onGoToLogin }) {
                 <p className="text-gray-400 text-sm mb-8">{message}</p>
 
                 {/* Stats strip */}
-                <div className="grid grid-cols-3 bg-gray-50 rounded-xl border border-gray-100 mb-8 text-left overflow-hidden">
-                  <div className="px-4 py-3 border-r border-gray-100">
-                    <p className="text-xs text-gray-400">Pengguna Aktif</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">100k+</p>
-                  </div>
-                  <div className="px-4 py-3 border-r border-gray-100">
-                    <p className="text-xs text-gray-400">Respon Cepat</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">&lt; 24 Jam</p>
-                  </div>
-                  <div className="px-4 py-3">
-                    <p className="text-xs text-gray-400">Garansi</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">Keamanan</p>
-                  </div>
-                </div>
-
                 <button
                   onClick={onGoToLogin}
                   className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition text-sm"
