@@ -67,11 +67,11 @@ export const UserProvider = ({ children }) => {
   }, [logoutUser]);
 
   // --- 1. REGISTER ---
-  const registerUser = async (data) => {
+  const registerUser = async (formData) => {
     setLoading(true);
     setError("");
     try {
-      await API.post(ENDPOINTS.REGISTER, data);
+      await API.post(ENDPOINTS.REGISTER, formData);
       return { success: true };
     } catch (err) {
       const msg = extractErrorMessage(err);
@@ -88,11 +88,11 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
-      const { token, user: userData } = data;
+      const { accessToken, user: userData } = data;
 
-      if (!token) throw new Error("Token tidak ditemukan dalam respons server");
+      if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
 
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", accessToken);
       setUser(mapResponseToUser(userData));
       return { success: true };
     } catch (err) {
@@ -110,11 +110,11 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const data = await API.post(ENDPOINTS.LOGIN_USERNAME, { username, password });
-      const { token, user: userData } = data;
+      const { accessToken, user: userData } = data;
 
-      if (!token) throw new Error("Token tidak ditemukan dalam respons server");
+      if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
 
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", accessToken);
       setUser(mapResponseToUser(userData));
       return { success: true };
     } catch (err) {
@@ -182,7 +182,6 @@ export const UserProvider = ({ children }) => {
     try {
       const data = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
 
-      // Jika otp_token kosong, email tidak terdaftar
       if (!data.otp_token) {
         return { success: false, message: "Email tidak terdaftar." };
       }
