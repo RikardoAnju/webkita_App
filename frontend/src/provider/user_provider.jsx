@@ -184,8 +184,10 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const response = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
+      console.log("FORGOT RESPONSE:", response); // ← tambah ini
       return { success: true, otpToken: response.data.otp_token };
     } catch (err) {
+      console.log("FORGOT ERROR:", err.response); // ← tambah ini
       const msg = extractErrorMessage(err);
       setError(msg);
       return { success: false, message: msg };
@@ -193,7 +195,6 @@ export const UserProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
   // --- 8. RESET PASSWORD (step 2) ---
   // data: { otp_token, otp, new_password, confirm_password }
   const resetPassword = async (data) => {
