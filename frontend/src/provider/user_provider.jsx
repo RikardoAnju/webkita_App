@@ -83,27 +83,33 @@ export const UserProvider = ({ children }) => {
   };
 
   // --- 2. LOGIN (email) ---
-  const loginUser = async (email, password) => {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
-     const { accessToken, user: userData } = data.data;
+ const loginUser = async (email, password) => {
+  setLoading(true);
+  setError("");
+  try {
+    const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
+    
+    // Tambah ini untuk debug — lihat di Console browser
+    console.log("RAW response:", JSON.stringify(data));
 
-      if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
+    // Coba semua kemungkinan struktur
+    const accessToken = data?.accessToken || data?.token || data?.access_token 
+                     || data?.data?.accessToken || data?.data?.token;
+    const userData = data?.user || data?.data?.user || data?.data;
 
-      localStorage.setItem("token", accessToken);
-      setUser(mapResponseToUser(userData));
-      return { success: true };
-    } catch (err) {
-      const msg = extractErrorMessage(err);
-      setError(msg);
-      return { success: false, message: msg };
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
 
+    localStorage.setItem("token", accessToken);
+    setUser(mapResponseToUser(userData));
+    return { success: true };
+  } catch (err) {
+    const msg = extractErrorMessage(err);
+    setError(msg);
+    return { success: false, message: msg };
+  } finally {
+    setLoading(false);
+  }
+};
   // --- 3. LOGIN (username) ---
   const loginWithUsername = async (username, password) => {
     setLoading(true);
