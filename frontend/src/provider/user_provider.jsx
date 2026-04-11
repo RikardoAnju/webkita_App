@@ -88,7 +88,7 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
-      const { accessToken, user: userData } = data;
+     const { accessToken, user: userData } = data.data;
 
       if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
 
