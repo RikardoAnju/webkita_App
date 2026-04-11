@@ -181,7 +181,12 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const data = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
-       console.log("DATA DARI API:", data);
+
+      // Jika otp_token kosong, email tidak terdaftar
+      if (!data.otp_token) {
+        return { success: false, message: "Email tidak terdaftar." };
+      }
+
       return { success: true, otpToken: data.otp_token };
     } catch (err) {
       const msg = extractErrorMessage(err);

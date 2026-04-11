@@ -10,13 +10,13 @@ import Harga from "../harga";
 import Orderan from "../orderan";
 import InformasiDetail from "../informasiDetail";
 import VerifyEmail from "../auth/VerifyEmail";
+import ResetPassword from "../auth/resetpassword";
 import ForgotPassword from "../auth/forgotpassword";
 import VerifyOTP from "../auth/VerifyOTP";
 
 function App() {
   const path = window.location.pathname;
 
-  // ── Halaman khusus tanpa layout (URL-based) ──────────────────────
   if (path === "/auth/verify-email") {
     return (
       <UserProvider>
@@ -28,23 +28,28 @@ function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
 
-  // Menyimpan data antar step forgot password
   const [forgotData, setForgotData] = useState({ otpToken: "", email: "" });
+  const [verifiedData, setVerifiedData] = useState({ otpToken: "", otp: "", email: "" });
 
   const handleNavigateToDetail = (plan) => {
     setSelectedPlanDetails(plan);
     setCurrentPage("informasidetail");
   };
 
-  // Step 1 selesai → simpan otpToken & email, pindah ke step 2
   const handleOTPSent = ({ otpToken, email }) => {
     setForgotData({ otpToken, email });
     setCurrentPage("otp-password");
   };
 
+  const handleOTPVerified = ({ otpToken, otp, email }) => {
+    setVerifiedData({ otpToken, otp, email });
+    setCurrentPage("reset-password");
+  };
+
   const isAuthPage = [
     "login",
     "register",
+    "reset-password",
     "forgot-password",
     "otp-password",
   ].includes(currentPage);
@@ -60,7 +65,6 @@ function App() {
           />
         );
 
-      // Step 1 — input email, kirim OTP
       case "forgot-password":
         return (
           <ForgotPassword
@@ -69,13 +73,23 @@ function App() {
           />
         );
 
-      // Step 2 — verifikasi OTP + input password baru
       case "otp-password":
         return (
           <VerifyOTP
             otpToken={forgotData.otpToken}
             email={forgotData.email}
             onBackToForgot={() => setCurrentPage("forgot-password")}
+            onOTPVerified={handleOTPVerified}
+          />
+        );
+
+      case "reset-password":
+        return (
+          <ResetPassword
+            otpToken={verifiedData.otpToken}
+            otp={verifiedData.otp}
+            email={verifiedData.email}
+            onBackToVerify={() => setCurrentPage("otp-password")}
             onSuccess={() => setCurrentPage("login")}
           />
         );
