@@ -10,7 +10,7 @@ import Harga from "../harga";
 import Orderan from "../orderan";
 import InformasiDetail from "../informasiDetail";
 import VerifyEmail from "../auth/VerifyEmail";
-import ForgotPassword from "../auth/forgotPassword";
+import ForgotPassword from "../auth/forgotpassword";
 import VerifyOTP from "../auth/VerifyOTP";
 
 function App() {
