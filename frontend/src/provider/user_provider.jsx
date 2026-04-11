@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import API from "../core/utils/api_client";
-import { ENDPOINTS } from "../core/utils/api_endpoint";
+import { ENDPOINTS } from "../core/constants/api_endpoint";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
