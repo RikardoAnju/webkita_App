@@ -10,12 +10,13 @@ import Harga from "../harga";
 import Orderan from "../orderan";
 import InformasiDetail from "../informasiDetail";
 import VerifyEmail from "../auth/VerifyEmail";
-import ForgotPassword from "../auth/ForgotPassword";
+import ForgotPassword from "../auth/forgotPassword";
+import VerifyOTP from "../auth/VerifyOTP";
 
 function App() {
   const path = window.location.pathname;
 
-  // ✅ halaman khusus tanpa layout
+  // ── Halaman khusus tanpa layout (URL-based) ──────────────────────
   if (path === "/auth/verify-email") {
     return (
       <UserProvider>
@@ -27,13 +28,26 @@ function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
 
+  // Menyimpan data antar step forgot password
+  const [forgotData, setForgotData] = useState({ otpToken: "", email: "" });
+
   const handleNavigateToDetail = (plan) => {
     setSelectedPlanDetails(plan);
     setCurrentPage("informasidetail");
   };
 
-  // ✅ DETEKSI halaman auth
-  const isAuthPage = ["login", "register", "forgot-password"].includes(currentPage);
+  // Step 1 selesai → simpan otpToken & email, pindah ke step 2
+  const handleOTPSent = ({ otpToken, email }) => {
+    setForgotData({ otpToken, email });
+    setCurrentPage("otp-password");
+  };
+
+  const isAuthPage = [
+    "login",
+    "register",
+    "forgot-password",
+    "otp-password",
+  ].includes(currentPage);
 
   const renderContent = () => {
     switch (currentPage) {
@@ -46,11 +60,23 @@ function App() {
           />
         );
 
+      // Step 1 — input email, kirim OTP
       case "forgot-password":
         return (
           <ForgotPassword
-            onBackToHome={() => setCurrentPage("home")}
             onBackToLogin={() => setCurrentPage("login")}
+            onOTPSent={handleOTPSent}
+          />
+        );
+
+      // Step 2 — verifikasi OTP + input password baru
+      case "otp-password":
+        return (
+          <VerifyOTP
+            otpToken={forgotData.otpToken}
+            email={forgotData.email}
+            onBackToForgot={() => setCurrentPage("forgot-password")}
+            onSuccess={() => setCurrentPage("login")}
           />
         );
 
