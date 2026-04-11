@@ -20,6 +20,7 @@ const mapResponseToUser = (r) => ({
 });
 
 const extractErrorMessage = (err) => {
+  if (typeof err === "string") return err;
   return (
     err?.response?.data?.message ||
     err?.response?.data?.error?.message ||
@@ -53,10 +54,8 @@ export const UserProvider = ({ children }) => {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const response = await API.get(ENDPOINTS.GET_PROFILE, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setUser(mapResponseToUser(response.data));
+          const data = await API.get(ENDPOINTS.GET_PROFILE);
+          setUser(mapResponseToUser(data));
         } catch {
           console.warn("Session expired or invalid — logging out");
           logoutUser();
@@ -88,8 +87,8 @@ export const UserProvider = ({ children }) => {
     setLoading(true);
     setError("");
     try {
-      const response = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
-      const { token, user: userData } = response.data;
+      const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
+      const { token, user: userData } = data;
 
       if (!token) throw new Error("Token tidak ditemukan dalam respons server");
 
@@ -110,8 +109,8 @@ export const UserProvider = ({ children }) => {
     setLoading(true);
     setError("");
     try {
-      const response = await API.post(ENDPOINTS.LOGIN_USERNAME, { username, password });
-      const { token, user: userData } = response.data;
+      const data = await API.post(ENDPOINTS.LOGIN_USERNAME, { username, password });
+      const { token, user: userData } = data;
 
       if (!token) throw new Error("Token tidak ditemukan dalam respons server");
 
@@ -132,7 +131,7 @@ export const UserProvider = ({ children }) => {
     setLoading(true);
     setError("");
     try {
-      await API.get(ENDPOINTS.VERIFY_EMAIL, { params: { token, email } });
+      await API.get(`${ENDPOINTS.VERIFY_EMAIL}?token=${token}&email=${email}`);
       return { success: true };
     } catch (err) {
       const msg = extractErrorMessage(err);
@@ -160,12 +159,12 @@ export const UserProvider = ({ children }) => {
   };
 
   // --- 6. UPDATE PROFILE ---
-  const updateProfile = async (data) => {
+  const updateProfile = async (formData) => {
     setLoading(true);
     setError("");
     try {
-      const response = await API.put(ENDPOINTS.UPDATE_USER, data);
-      setUser(mapResponseToUser(response.data));
+      const data = await API.put(ENDPOINTS.UPDATE_USER, formData);
+      setUser(mapResponseToUser(data));
       return { success: true };
     } catch (err) {
       const msg = extractErrorMessage(err);
@@ -176,33 +175,13 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 7. FORGOT PASSWORD (step 1) ---
-  // Backend returns { otp_token: "<jwt>" }
-  // Simpan otpToken di komponen pemanggil, lalu kirim ke resetPassword()
+  // --- 7. FORGOT PASSWORD ---
   const forgotPassword = async (email) => {
     setLoading(true);
     setError("");
     try {
-      const response = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
-      console.log("FORGOT RESPONSE:", response); // ← tambah ini
-      return { success: true, otpToken: response.data.otp_token };
-    } catch (err) {
-      console.log("FORGOT ERROR:", err.response); // ← tambah ini
-      const msg = extractErrorMessage(err);
-      setError(msg);
-      return { success: false, message: msg };
-    } finally {
-      setLoading(false);
-    }
-  };
-  // --- 8. RESET PASSWORD (step 2) ---
-  // data: { otp_token, otp, new_password, confirm_password }
-  const resetPassword = async (data) => {
-    setLoading(true);
-    setError("");
-    try {
-      await API.post(ENDPOINTS.RESET_PASSWORD, data);
-      return { success: true };
+      const data = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
+      return { success: true, otpToken: data.otp_token };
     } catch (err) {
       const msg = extractErrorMessage(err);
       setError(msg);
@@ -212,8 +191,21 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 9. LOGOUT ---
-  // logoutUser sudah didefinisikan di atas via useCallback
+  // --- 8. RESET PASSWORD ---
+  const resetPassword = async (payload) => {
+    setLoading(true);
+    setError("");
+    try {
+      await API.post(ENDPOINTS.RESET_PASSWORD, payload);
+      return { success: true };
+    } catch (err) {
+      const msg = extractErrorMessage(err);
+      setError(msg);
+      return { success: false, message: msg };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <UserContext.Provider
@@ -240,7 +232,7 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-// ─── Hook ──────────────────────────────────────────────────────────────────────
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export const useUser = () => {
   const context = useContext(UserContext);
