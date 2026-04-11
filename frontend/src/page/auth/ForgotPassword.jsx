@@ -145,4 +145,4 @@ function ForgotPassword({ onBackToLogin, onOTPSent }) {
   );
 }
 
-export default ForgotPassword;git add src/page/auth/ForgotPassword.jsx
+export default ForgotPassword;
