@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Pastikan TIDAK ada tanda "/" di akhir v1
-const BASE_URL = "https://ebkitaapi-vinskaco9956-57lmjw8fud11cbrro5.leapcell-async.dev/api/v1";
+const BASE_URL = "https://ebkitaapi-vinskaco9956-b09mad4t.leapcell.dev/api/v1";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

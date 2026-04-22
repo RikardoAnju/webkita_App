@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import Layout from "../../components/Layout";
 import { UserProvider } from "../../provider/user_provider";
 import Home from "../home/Home";
@@ -15,137 +16,101 @@ import ForgotPassword from "../auth/forgotpassword";
 import VerifyOTP from "../auth/VerifyOTP";
 
 function App() {
-  const path = window.location.pathname;
-
-  if (path === "/auth/verify-email") {
-    return (
-      <UserProvider>
-        <VerifyEmail onGoToLogin={() => (window.location.href = "/")} />
-      </UserProvider>
-    );
-  }
-
-  const [currentPage, setCurrentPage] = useState("home");
+  const navigate = useNavigate();
   const [selectedPlanDetails, setSelectedPlanDetails] = useState(null);
-
   const [forgotData, setForgotData] = useState({ otpToken: "", email: "" });
   const [verifiedData, setVerifiedData] = useState({ otpToken: "", otp: "", email: "" });
 
   const handleNavigateToDetail = (plan) => {
     setSelectedPlanDetails(plan);
-    setCurrentPage("informasidetail");
+    navigate("/informasidetail");
   };
 
   const handleOTPSent = ({ otpToken, email }) => {
     setForgotData({ otpToken, email });
-    setCurrentPage("otp-password");
+    navigate("/otp-password");
   };
 
   const handleOTPVerified = ({ otpToken, otp, email }) => {
     setVerifiedData({ otpToken, otp, email });
-    setCurrentPage("reset-password");
+    navigate("/reset-password");
   };
 
-  const isAuthPage = [
-    "login",
-    "register",
-    "reset-password",
-    "forgot-password",
-    "otp-password",
-  ].includes(currentPage);
-
-  const renderContent = () => {
-    switch (currentPage) {
-      case "login":
-        return (
-          <Login
-            onBackToHome={() => setCurrentPage("home")}
-            onForgotPassword={() => setCurrentPage("forgot-password")}
-            onGoToRegister={() => setCurrentPage("register")}
-          />
-        );
-
-      case "forgot-password":
-        return (
-          <ForgotPassword
-            onBackToLogin={() => setCurrentPage("login")}
-            onOTPSent={handleOTPSent}
-          />
-        );
-
-      case "otp-password":
-        return (
-          <VerifyOTP
-            otpToken={forgotData.otpToken}
-            email={forgotData.email}
-            onBackToForgot={() => setCurrentPage("forgot-password")}
-            onOTPVerified={handleOTPVerified}
-          />
-        );
-
-      case "reset-password":
-        return (
-          <ResetPassword
-            otpToken={verifiedData.otpToken}
-            otp={verifiedData.otp}
-            email={verifiedData.email}
-            onBackToVerify={() => setCurrentPage("otp-password")}
-            onSuccess={() => setCurrentPage("login")}
-          />
-        );
-
-      case "register":
-        return (
-          <Register onBackToHome={() => setCurrentPage("home")} />
-        );
-
-      case "carakerja":
-        return <CaraKerja onBackToHome={() => setCurrentPage("home")} />;
-
-      case "harga":
-        return (
-          <Harga
-            onBackToHome={() => setCurrentPage("home")}
-            onSelectPlan={handleNavigateToDetail}
-          />
-        );
-
-      case "orderan":
-        return <Orderan onBackToHome={() => setCurrentPage("home")} />;
-
-      case "profile":
-        return <ProfilePage onBackToHome={() => setCurrentPage("home")} />;
-
-      case "informasidetail":
-        return (
-          <InformasiDetail
-            plan={selectedPlanDetails}
-            onBackToHome={() => setCurrentPage("home")}
-            onBackToHarga={() => setCurrentPage("harga")}
-          />
-        );
-
-      default:
-        return <Home />;
-    }
-  };
+  const authRoutes = ["/login", "/register", "/reset-password", "/forgot-password", "/otp-password"];
+  const isAuthPage = authRoutes.includes(window.location.pathname);
 
   return (
     <UserProvider>
       {isAuthPage ? (
-        renderContent()
+        <Routes>
+          <Route path="/login" element={
+            <Login
+              onBackToHome={() => navigate("/")}
+              onForgotPassword={() => navigate("/forgot-password")}
+              onGoToRegister={() => navigate("/register")}
+            />
+          } />
+          <Route path="/register" element={
+            <Register onBackToHome={() => navigate("/")} />
+          } />
+          <Route path="/forgot-password" element={
+            <ForgotPassword
+              onBackToLogin={() => navigate("/login")}
+              onOTPSent={handleOTPSent}
+            />
+          } />
+          <Route path="/otp-password" element={
+            <VerifyOTP
+              otpToken={forgotData.otpToken}
+              email={forgotData.email}
+              onBackToForgot={() => navigate("/forgot-password")}
+              onOTPVerified={handleOTPVerified}
+            />
+          } />
+          <Route path="/reset-password" element={
+            <ResetPassword
+              otpToken={verifiedData.otpToken}
+              otp={verifiedData.otp}
+              email={verifiedData.email}
+              onBackToVerify={() => navigate("/otp-password")}
+              onSuccess={() => navigate("/login")}
+            />
+          } />
+        </Routes>
       ) : (
         <Layout
-          onLoginClick={() => setCurrentPage("login")}
-          onRegisterClick={() => setCurrentPage("register")}
-          onCaraKerjaClick={() => setCurrentPage("carakerja")}
-          onHargaClick={() => setCurrentPage("harga")}
-          onOrderanClick={() => setCurrentPage("orderan")}
-          onProfileClick={() => setCurrentPage("profile")}
-          onNavigateHome={() => setCurrentPage("home")}
-          currentPage={currentPage}
+          onLoginClick={() => navigate("/login")}
+          onRegisterClick={() => navigate("/register")}
+          onCaraKerjaClick={() => navigate("/carakerja")}
+          onHargaClick={() => navigate("/harga")}
+          onOrderanClick={() => navigate("/orderan")}
+          onProfileClick={() => navigate("/profile")}
+          onNavigateHome={() => navigate("/")}
+          currentPage={window.location.pathname.replace("/", "") || "home"}
         >
-          {renderContent()}
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/carakerja" element={<CaraKerja onBackToHome={() => navigate("/")} />} />
+            <Route path="/harga" element={
+              <Harga
+                onBackToHome={() => navigate("/")}
+                onSelectPlan={handleNavigateToDetail}
+              />
+            } />
+            <Route path="/orderan" element={<Orderan onBackToHome={() => navigate("/")} />} />
+            <Route path="/profile" element={<ProfilePage onBackToHome={() => navigate("/")} />} />
+            <Route path="/informasidetail" element={
+              <InformasiDetail
+                plan={selectedPlanDetails}
+                onBackToHome={() => navigate("/")}
+                onBackToHarga={() => navigate("/harga")}
+              />
+            } />
+            <Route path="/auth/verify-email" element={
+              <VerifyEmail onGoToLogin={() => navigate("/")} />
+            } />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
         </Layout>
       )}
     </UserProvider>
