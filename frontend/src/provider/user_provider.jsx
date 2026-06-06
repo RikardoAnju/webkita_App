@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import API from "../core/utils/api_client";
 import { ENDPOINTS } from "../core/constants/api_endpoint";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const mapResponseToUser = (r) => ({
   id: r.id,
   username: r.username,
@@ -29,11 +27,7 @@ const extractErrorMessage = (err) => {
   );
 };
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
 const UserContext = createContext(null);
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -48,7 +42,6 @@ export const UserProvider = ({ children }) => {
     setError("");
   }, []);
 
-  // --- AUTO LOGIN (session restore) ---
   useEffect(() => {
     const checkSession = async () => {
       const token = localStorage.getItem("token");
@@ -57,7 +50,6 @@ export const UserProvider = ({ children }) => {
           const data = await API.get(ENDPOINTS.GET_PROFILE);
           setUser(mapResponseToUser(data));
         } catch {
-          console.warn("Session expired or invalid — logging out");
           logoutUser();
         }
       }
@@ -66,7 +58,6 @@ export const UserProvider = ({ children }) => {
     checkSession();
   }, [logoutUser]);
 
-  // --- 1. REGISTER ---
   const registerUser = async (formData) => {
     setLoading(true);
     setError("");
@@ -82,35 +73,29 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 2. LOGIN (email) ---
- const loginUser = async (email, password) => {
-  setLoading(true);
-  setError("");
-  try {
-    const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
-    
-    // Tambah ini untuk debug — lihat di Console browser
-    console.log("RAW response:", JSON.stringify(data));
+  const loginUser = async (email, password) => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
+      const accessToken = data?.accessToken || data?.token || data?.access_token
+                       || data?.data?.accessToken || data?.data?.token;
+      const userData = data?.user || data?.data?.user || data?.data;
 
-    // Coba semua kemungkinan struktur
-    const accessToken = data?.accessToken || data?.token || data?.access_token 
-                     || data?.data?.accessToken || data?.data?.token;
-    const userData = data?.user || data?.data?.user || data?.data;
+      if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
 
-    if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
+      localStorage.setItem("token", accessToken);
+      setUser(mapResponseToUser(userData));
+      return { success: true };
+    } catch (err) {
+      const msg = extractErrorMessage(err);
+      setError(msg);
+      return { success: false, message: msg };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    localStorage.setItem("token", accessToken);
-    setUser(mapResponseToUser(userData));
-    return { success: true };
-  } catch (err) {
-    const msg = extractErrorMessage(err);
-    setError(msg);
-    return { success: false, message: msg };
-  } finally {
-    setLoading(false);
-  }
-};
-  // --- 3. LOGIN (username) ---
   const loginWithUsername = async (username, password) => {
     setLoading(true);
     setError("");
@@ -132,7 +117,6 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 4. VERIFY EMAIL ---
   const verifyEmail = async (token, email) => {
     setLoading(true);
     setError("");
@@ -148,7 +132,6 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 5. RESEND VERIFICATION ---
   const resendVerification = async (email) => {
     setLoading(true);
     setError("");
@@ -164,7 +147,6 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 6. UPDATE PROFILE ---
   const updateProfile = async (formData) => {
     setLoading(true);
     setError("");
@@ -181,17 +163,12 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 7. FORGOT PASSWORD ---
   const forgotPassword = async (email) => {
     setLoading(true);
     setError("");
     try {
       const data = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
-
-      if (!data.otp_token) {
-        return { success: false, message: "Email tidak terdaftar." };
-      }
-
+      if (!data.otp_token) return { success: false, message: "Email tidak terdaftar." };
       return { success: true, otpToken: data.otp_token };
     } catch (err) {
       const msg = extractErrorMessage(err);
@@ -202,7 +179,6 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // --- 8. RESET PASSWORD ---
   const resetPassword = async (payload) => {
     setLoading(true);
     setError("");
@@ -242,8 +218,6 @@ export const UserProvider = ({ children }) => {
     </UserContext.Provider>
   );
 };
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export const useUser = () => {
   const context = useContext(UserContext);
