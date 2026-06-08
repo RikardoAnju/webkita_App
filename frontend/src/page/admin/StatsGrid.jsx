@@ -1,5 +1,5 @@
 import React from "react";
-import { Package, Clock, TrendingUp, CheckCircle, Users, XCircle } from "lucide-react";
+import { Package, Clock, TrendingUp, CheckCircle, Users, XCircle, BadgeCheck } from "lucide-react";
 
 const Card = ({ icon: Icon, label, value, sub, color }) => (
   <div style={{
@@ -30,11 +30,12 @@ const Card = ({ icon: Icon, label, value, sub, color }) => (
 );
 
 const StatsGrid = ({ orders, users }) => {
-  const total     = orders.length;
-  const pending   = orders.filter(o => o.status === "pending").length;
-  const process   = orders.filter(o => o.status === "process").length;
-  const done      = orders.filter(o => o.status === "done").length;
-  const rejected  = orders.filter(o => o.status === "rejected").length;
+  const total      = orders.length;
+  const pending    = orders.filter(o => o.status === "pending").length;
+  const process    = orders.filter(o => o.status === "process").length;
+  const approved   = orders.filter(o => o.status === "approved").length;
+  const done       = orders.filter(o => o.status === "done").length;
+  const rejected   = orders.filter(o => o.status === "rejected").length;
   const totalUsers = users.length;
 
   return (
@@ -43,11 +44,13 @@ const StatsGrid = ({ orders, users }) => {
       gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
       gap: 16,
     }}>
-      <Card icon={Package}     label="Total Orderan"  value={total}      sub={`${rejected} ditolak`}   color="#3B82F6" />
-      <Card icon={Clock}       label="Menunggu"        value={pending}    sub="perlu ditinjau"          color="#F59E0B" />
-      <Card icon={TrendingUp}  label="Diproses"        value={process}    sub="sedang berjalan"         color="#8B5CF6" />
-      <Card icon={CheckCircle} label="Selesai"         value={done}       sub="berhasil"                color="#10B981" />
-      <Card icon={Users}       label="Total User"      value={totalUsers} sub="terdaftar"               color="#06B6D4" />
+      <Card icon={Package}     label="Total Orderan"  value={total}      sub={`${rejected} ditolak`}  color="#3B82F6" />
+      <Card icon={Clock}       label="Menunggu"        value={pending}    sub="perlu ditinjau"         color="#F59E0B" />
+      <Card icon={TrendingUp}  label="Diproses"        value={process}    sub="sedang berjalan"        color="#8B5CF6" />
+      <Card icon={BadgeCheck}  label="Approved"        value={approved}   sub="disetujui"              color="#2563EB" />
+      <Card icon={CheckCircle} label="Selesai"         value={done}       sub="berhasil"               color="#10B981" />
+      <Card icon={XCircle}     label="Ditolak"         value={rejected}   sub="tidak dilanjutkan"      color="#EF4444" />
+      <Card icon={Users}       label="Total User"      value={totalUsers} sub="terdaftar"              color="#06B6D4" />
     </div>
   );
 };
