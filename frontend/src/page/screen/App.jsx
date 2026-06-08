@@ -31,6 +31,7 @@ const Spinner = () => (
   </div>
 );
 
+// Guard: hanya admin & developer
 const AdminGuard = ({ children }) => {
   const { user, loading } = useUser();
   if (loading) return <Spinner />;
@@ -38,11 +39,20 @@ const AdminGuard = ({ children }) => {
   return children;
 };
 
+// Guard: jika sudah login sebagai admin/dev → ke /admin
 const GuestGuard = ({ children }) => {
   const { user, loading } = useUser();
   if (loading) return <Spinner />;
   if (user && ADMIN_ROLES.includes(user.role)) return <Navigate to="/admin" replace />;
   if (user) return <Navigate to="/" replace />;
+  return children;
+};
+
+// Guard: jika admin buka halaman publik → redirect ke /admin
+const AdminRedirect = ({ children }) => {
+  const { user, loading } = useUser();
+  if (loading) return <Spinner />;
+  if (user && ADMIN_ROLES.includes(user.role)) return <Navigate to="/admin" replace />;
   return children;
 };
 
@@ -135,39 +145,41 @@ function AppRoutes() {
 
       {/* ── Public dengan Layout ── */}
       <Route path="*" element={
-        <Layout
-          onLoginClick={() => navigate("/login")}
-          onRegisterClick={() => navigate("/register")}
-          onCaraKerjaClick={() => navigate("/carakerja")}
-          onHargaClick={() => navigate("/harga")}
-          onOrderanClick={() => navigate("/orderan")}
-          onProfileClick={() => navigate("/profile")}
-          onNavigateHome={() => navigate("/")}
-        >
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/carakerja" element={<CaraKerja onBackToHome={() => navigate("/")} />} />
-            <Route path="/harga" element={
-              <Harga
-                onBackToHome={() => navigate("/")}
-                onSelectPlan={handleNavigateToDetail}
-              />
-            } />
-            <Route path="/orderan" element={<Orderan onBackToHome={() => navigate("/")} />} />
-            <Route path="/profile" element={<ProfilePage onBackToHome={() => navigate("/")} />} />
-            <Route path="/informasidetail" element={
-              <InformasiDetail
-                plan={selectedPlanDetails}
-                onBackToHome={handleBackToHome}
-                onBackToHarga={handleBackToHarga}
-              />
-            } />
-            <Route path="/auth/verify-email" element={
-              <VerifyEmail onGoToLogin={() => navigate("/")} />
-            } />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Layout>
+        <AdminRedirect>
+          <Layout
+            onLoginClick={() => navigate("/login")}
+            onRegisterClick={() => navigate("/register")}
+            onCaraKerjaClick={() => navigate("/carakerja")}
+            onHargaClick={() => navigate("/harga")}
+            onOrderanClick={() => navigate("/orderan")}
+            onProfileClick={() => navigate("/profile")}
+            onNavigateHome={() => navigate("/")}
+          >
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/carakerja" element={<CaraKerja onBackToHome={() => navigate("/")} />} />
+              <Route path="/harga" element={
+                <Harga
+                  onBackToHome={() => navigate("/")}
+                  onSelectPlan={handleNavigateToDetail}
+                />
+              } />
+              <Route path="/orderan" element={<Orderan onBackToHome={() => navigate("/")} />} />
+              <Route path="/profile" element={<ProfilePage onBackToHome={() => navigate("/")} />} />
+              <Route path="/informasidetail" element={
+                <InformasiDetail
+                  plan={selectedPlanDetails}
+                  onBackToHome={handleBackToHome}
+                  onBackToHarga={handleBackToHarga}
+                />
+              } />
+              <Route path="/auth/verify-email" element={
+                <VerifyEmail onGoToLogin={() => navigate("/")} />
+              } />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Layout>
+        </AdminRedirect>
       } />
     </Routes>
   );
