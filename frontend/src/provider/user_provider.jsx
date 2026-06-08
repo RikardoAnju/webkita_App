@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import API from "../core/utils/api_client";
 import { ENDPOINTS } from "../core/constants/api_endpoint";
 
@@ -27,7 +27,7 @@ const extractErrorMessage = (err) => {
   );
 };
 
-const UserContext = createContext(null);
+export const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -41,6 +41,13 @@ export const UserProvider = ({ children }) => {
     setUser(null);
     setError("");
   }, []);
+
+  const hasRole = useCallback((...roles) => {
+    return roles.includes(user?.role);
+  }, [user]);
+
+  const isAdmin = user?.role === "admin";
+  const isDeveloper = user?.role === "developer";
 
   useEffect(() => {
     const checkSession = async () => {
@@ -78,15 +85,17 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
-      const accessToken = data?.accessToken || data?.token || data?.access_token
-                       || data?.data?.accessToken || data?.data?.token;
+      const accessToken =
+        data?.accessToken || data?.token || data?.access_token ||
+        data?.data?.accessToken || data?.data?.token;
       const userData = data?.user || data?.data?.user || data?.data;
 
       if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
 
       localStorage.setItem("token", accessToken);
-      setUser(mapResponseToUser(userData));
-      return { success: true };
+      const mappedUser = mapResponseToUser(userData);
+      setUser(mappedUser);
+      return { success: true, user: mappedUser };
     } catch (err) {
       const msg = extractErrorMessage(err);
       setError(msg);
@@ -201,6 +210,9 @@ export const UserProvider = ({ children }) => {
         loading,
         error,
         isAuthenticated: !!user,
+        isAdmin,
+        isDeveloper,
+        hasRole,
         registerUser,
         loginUser,
         loginWithUsername,
@@ -221,8 +233,6 @@ export const UserProvider = ({ children }) => {
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (!context) {
-    throw new Error("useUser harus digunakan di dalam UserProvider");
-  }
+  if (!context) throw new Error("useUser harus digunakan di dalam UserProvider");
   return context;
 };

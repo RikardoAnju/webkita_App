@@ -1,60 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Check, Upload, X, Plus, ChevronDown, AlertCircle } from "lucide-react";
-import API from "../core/utils/api_client";
-import { ENDPOINTS } from "../core/constants/api_endpoint";
-
-const extractErrorMessage = (err) => {
-  if (typeof err === "string") return err;
-  return (
-    err?.response?.data?.message ||
-    err?.response?.data?.error?.message ||
-    err?.message ||
-    "Terjadi kesalahan pada server"
-  );
-};
-
-const useCreateProject = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const clearError = useCallback(() => setError(""), []);
-
-  const createProject = async (submission, attachments = []) => {
-    setLoading(true);
-    setError("");
-    try {
-      const form = new FormData();
-
-      if (submission.planTitle) form.append("planTitle", submission.planTitle);
-      if (submission.projectTitle) form.append("projectTitle", submission.projectTitle);
-      if (submission.category) form.append("category", submission.category);
-      if (submission.description) form.append("description", submission.description);
-      if (submission.skills) form.append("skills", submission.skills);
-      if (submission.contactName) form.append("contactName", submission.contactName);
-      if (submission.contactPhone) form.append("contactPhone", submission.contactPhone);
-      if (submission.additionalNotes) form.append("additionalNotes", submission.additionalNotes);
-
-      for (const file of attachments) {
-        form.append("attachments", file);
-      }
-
-      const data = await API.post(ENDPOINTS.CREATE_PROJECT, form);
-
-      return { success: true, data: data.data };
-    } catch (err) {
-      const msg = extractErrorMessage(err);
-      setError(msg);
-      return { success: false, message: msg };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { createProject, loading, error, clearError };
-};
+import { useProject } from "../provider/project_provider";
 
 const InformasiDetail = ({ plan, onBackToHome, onBackToHarga }) => {
-  const { createProject, loading, error, clearError } = useCreateProject();
+  const { createProject, loading, error, clearError } = useProject();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -73,15 +22,12 @@ const InformasiDetail = ({ plan, onBackToHome, onBackToHarga }) => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const categories = [
-    "E-commerce",
-    "Landing Page",
-    "Company Profile",
-    "Mobile Application",
-    "Dashboard",
-    "Web Application",
-    "Blog/CMS",
-    "Portfolio",
-    "Lainnya",
+    { label: "Website / Web Application", value: "website" },
+    { label: "Mobile Application", value: "mobile" },
+    { label: "Desktop Application", value: "desktop" },
+    { label: "Design (UI/UX)", value: "design" },
+    { label: "Marketing & Branding", value: "marketing" },
+    { label: "Lainnya", value: "other" },
   ];
 
   const steps = [
@@ -160,6 +106,7 @@ const InformasiDetail = ({ plan, onBackToHome, onBackToHarga }) => {
 
     const submission = {
       planTitle: plan?.title ?? "",
+      priceRange: plan?.priceRange ?? "",
       projectTitle: formData.projectTitle,
       category: formData.category,
       description: formData.description,
@@ -276,7 +223,7 @@ const InformasiDetail = ({ plan, onBackToHome, onBackToHarga }) => {
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none transition text-left flex items-center justify-between bg-white"
                   >
                     <span className={formData.category ? "text-gray-900" : "text-gray-400"}>
-                      {formData.category || "Pilih kategori proyek"}
+                      {categories.find((c) => c.value === formData.category)?.label || "Pilih kategori proyek"}
                     </span>
                     <ChevronDown className="w-5 h-5 text-gray-400" />
                   </button>
@@ -284,12 +231,12 @@ const InformasiDetail = ({ plan, onBackToHome, onBackToHarga }) => {
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                       {categories.map((cat) => (
                         <button
-                          key={cat}
+                          key={cat.value}
                           type="button"
-                          onClick={() => { handleInputChange("category", cat); setCategoryDropdownOpen(false); }}
+                          onClick={() => { handleInputChange("category", cat.value); setCategoryDropdownOpen(false); }}
                           className="w-full px-4 py-3 text-left hover:bg-gray-50 transition"
                         >
-                          {cat}
+                          {cat.label}
                         </button>
                       ))}
                     </div>

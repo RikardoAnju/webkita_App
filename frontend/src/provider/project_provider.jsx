@@ -2,22 +2,22 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import API from "../core/utils/api_client";
 import { ENDPOINTS } from "../core/constants/api_endpoint";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const mapResponseToProject = (r) => ({
     id: r.id,
-    userId: r.userId,
-    planTitle: r.planTitle,
-    projectTitle: r.projectTitle,
+    userId: r.user_id ?? r.userId,
+    planTitle: r.plan_title ?? r.planTitle ?? "",
+    priceRange: r.price_range ?? r.priceRange ?? "",
+    planPriceRange: r.plan_price_range ?? r.planPriceRange ?? "",
+    projectTitle: r.project_title ?? r.projectTitle,
     category: r.category,
     description: r.description,
     skills: r.skills,
-    contactName: r.contactName,
-    contactPhone: r.contactPhone,
-    additionalNotes: r.additionalNotes,
+    contactName: r.contact_name ?? r.contactName,
+    contactPhone: r.contact_phone ?? r.contactPhone,
+    additionalNotes: r.additional_notes ?? r.additionalNotes ?? "",
     status: r.status,
-    createdAt: r.createdAt,
-    updatedAt: r.updatedAt,
+    createdAt: r.created_at ?? r.createdAt,
+    updatedAt: r.updated_at ?? r.updatedAt,
 });
 
 const extractErrorMessage = (err) => {
@@ -30,11 +30,7 @@ const extractErrorMessage = (err) => {
     );
 };
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
 const ProjectContext = createContext(null);
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export const ProjectProvider = ({ children }) => {
     const [projects, setProjects] = useState([]);
@@ -45,29 +41,32 @@ export const ProjectProvider = ({ children }) => {
 
     const clearError = useCallback(() => setError(""), []);
 
-    // --- 1. CREATE PROJECT ---
     const createProject = async (submission, attachments = []) => {
         setLoading(true);
         setError("");
         try {
-            const form = new FormData();
+            const projectData = {
+                plan_title: submission.planTitle || "",
+                price_range: submission.priceRange || "",
+                project_title: submission.projectTitle,
+                category: submission.category,
+                description: submission.description,
+                skills: submission.skills,
+                contact_name: submission.contactName,
+                contact_phone: submission.contactPhone,
+                additional_notes: submission.additionalNotes || "",
+            };
 
-            if (submission.planTitle) form.append("planTitle", submission.planTitle);
-            if (submission.projectTitle) form.append("projectTitle", submission.projectTitle);
-            if (submission.category) form.append("category", submission.category);
-            if (submission.description) form.append("description", submission.description);
-            if (submission.skills) form.append("skills", submission.skills);
-            if (submission.contactName) form.append("contactName", submission.contactName);
-            if (submission.contactPhone) form.append("contactPhone", submission.contactPhone);
-            if (submission.additionalNotes) form.append("additionalNotes", submission.additionalNotes);
+            const data = await API.post(ENDPOINTS.CREATE_PROJECT, projectData);
+            const projectId = data.data?.id;
 
-            for (const file of attachments) {
-                form.append("attachments", file);
+            if (attachments.length > 0 && projectId) {
+                for (const file of attachments) {
+                    const form = new FormData();
+                    form.append("file", file);
+                    await API.post(ENDPOINTS.UPLOAD_ATTACHMENT(projectId), form);
+                }
             }
-
-            const data = await API.post(ENDPOINTS.CREATE_PROJECT, form, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
 
             return { success: true, data: data.data };
         } catch (err) {
@@ -79,7 +78,6 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
-    // --- 2. GET ALL PROJECTS (admin) ---
     const getAllProjects = async () => {
         setLoading(true);
         setError("");
@@ -97,7 +95,6 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
-    // --- 3. GET MY PROJECTS ---
     const getMyProjects = async () => {
         setLoading(true);
         setError("");
@@ -115,7 +112,6 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
-    // --- 4. GET PROJECT BY ID ---
     const getProjectById = async (projectId) => {
         setLoading(true);
         setError("");
@@ -133,7 +129,6 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
-    // --- 5. GET PROJECTS BY USER (admin) ---
     const getProjectsByUser = async (userId) => {
         setLoading(true);
         setError("");
@@ -150,7 +145,6 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
-    // --- 6. UPDATE PROJECT STATUS ---
     const updateProjectStatus = async (projectId, status) => {
         setLoading(true);
         setError("");
@@ -160,7 +154,6 @@ export const ProjectProvider = ({ children }) => {
                 { status }
             );
 
-            // Sync local state if the updated project is in the list
             setProjects((prev) =>
                 prev.map((p) => (p.id === projectId ? { ...p, status } : p))
             );
@@ -181,7 +174,49 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
-    // --- 7. DELETE PROJECT ---
+    // ✅ BARU — update harga project
+    const updateProjectPrice = async (projectId, price) => {
+        setLoading(true);
+        setError("");
+        try {
+            const data = await API.patch(
+                `/project/${projectId}/price`,
+                { plan_price_range: price }
+            );
+
+            // Update state lokal langsung supaya tampilan berubah tanpa full refresh
+            setProjects((prev) =>
+                prev.map((p) =>
+                    p.id === projectId
+                        ? { ...p, priceRange: price, planPriceRange: price }
+                        : p
+                )
+            );
+            setMyProjects((prev) =>
+                prev.map((p) =>
+                    p.id === projectId
+                        ? { ...p, priceRange: price, planPriceRange: price }
+                        : p
+                )
+            );
+            if (selectedProject?.id === projectId) {
+                setSelectedProject((prev) => ({
+                    ...prev,
+                    priceRange: price,
+                    planPriceRange: price,
+                }));
+            }
+
+            return { success: true, data: data.data };
+        } catch (err) {
+            const msg = extractErrorMessage(err);
+            setError(msg);
+            return { success: false, message: msg };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const deleteProject = async (projectId) => {
         setLoading(true);
         setError("");
@@ -218,6 +253,7 @@ export const ProjectProvider = ({ children }) => {
                 getProjectById,
                 getProjectsByUser,
                 updateProjectStatus,
+                updateProjectPrice, // ✅ tambah ini
                 deleteProject,
             }}
         >
@@ -225,8 +261,6 @@ export const ProjectProvider = ({ children }) => {
         </ProjectContext.Provider>
     );
 };
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export const useProject = () => {
     const context = useContext(ProjectContext);

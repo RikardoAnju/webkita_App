@@ -1,14 +1,18 @@
 // project_model.js
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// Status yang dipakai backend (project.service.ts)
 export const ProjectStatus = {
-  Pending:   "pending",
-  InReview:  "in_review",
-  Approved:  "approved",
-  Rejected:  "rejected",
+  Pending:  "pending",
+  Process:  "process",    // fix: was "in_review", backend pakai "process"
+  Approved: "approved",
+  Rejected: "rejected",
+  Done:     "done",       // tambah: ada di backend tapi belum ada di sini
 };
 
-export const CategoryType = {
+// Kategori yang ditampilkan di UI (Harga.jsx & InformasiDetail.jsx)
+export const CategoryLabel = {
   Ecommerce:      "E-commerce",
   LandingPage:    "Landing Page",
   CompanyProfile: "Company Profile",
@@ -18,6 +22,16 @@ export const CategoryType = {
   BlogCMS:        "Blog/CMS",
   Portfolio:      "Portfolio",
   Other:          "Lainnya",
+};
+
+// Kategori yang diterima backend (project.service.ts validCategories)
+export const CategoryType = {
+  Website:   "website",
+  Mobile:    "mobile",
+  Desktop:   "desktop",
+  Design:    "design",
+  Marketing: "marketing",
+  Other:     "other",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -37,16 +51,18 @@ export const isValidProjectStatus = (status) =>
  * @property {number} id
  * @property {number} userId
  * @property {string} [planTitle]
+ * @property {string} [priceRange]    
  * @property {string} projectTitle
  * @property {string} category
  * @property {string} description
- * @property {string} skills        
+ * @property {string} skills
  * @property {string} contactName
  * @property {string} contactPhone
  * @property {string} [additionalNotes]
- * @property {"pending"|"in_review"|"approved"|"rejected"} status
+ * @property {"pending"|"process"|"approved"|"rejected"|"done"} status
  * @property {string|Date} createdAt
- * @property {string|Date} updatedAt
+ * @property {string|Date} [updatedAt]
+ * @property {string|Date|null} [deletedAt]
  */
 
 /**
@@ -54,7 +70,7 @@ export const isValidProjectStatus = (status) =>
  * @property {number} id
  * @property {number} projectId
  * @property {string} fileName
- * @property {number} fileSize      
+ * @property {number} fileSize
  * @property {string} [fileType]
  * @property {string} storagePath
  * @property {string|Date} createdAt
@@ -62,24 +78,41 @@ export const isValidProjectStatus = (status) =>
 
 /**
  * @typedef {Object} ProjectSubmission
- * @property {number}   userId          
- * @property {string}   [planTitle]
- * @property {string}   projectTitle
- * @property {string}   category
- * @property {string}   description
- * @property {string}   skills          
- * @property {string}   contactName
- * @property {string}   contactPhone
- * @property {string}   [additionalNotes]
+ * @property {number} userId
+ * @property {string} [planTitle]
+ * @property {string} [priceRange]     
+ * @property {string} projectTitle
+ * @property {string} category
+ * @property {string} description
+ * @property {string} skills
+ * @property {string} contactName
+ * @property {string} contactPhone
+ * @property {string} [additionalNotes]
  */
 
 /**
  * @typedef {Object} ProjectResponse
- * @property {number}               id
- * @property {string}               projectTitle
- * @property {string}               category
- * @property {"pending"|"in_review"|"approved"|"rejected"} status
- * @property {ProjectAttachment[]}  [attachments]
- * @property {string|Date}          createdAt
- * @property {string}               message
+ * @property {number} id
+ * @property {string} [planTitle]
+ * @property {string} [priceRange]   
+ * @property {string} projectTitle
+ * @property {string} category
+ * @property {"pending"|"process"|"approved"|"rejected"|"done"} status
+ * @property {ProjectAttachment[]} [attachments]
+ * @property {string|Date} createdAt
+ * @property {string} [message]
+ */
+
+/**
+ * 
+ * @typedef {Object} SelectedPlan
+ * @property {string} title
+ * @property {string} priceRange
+ * @property {string} tier
+ * @property {number} minPrice
+ * @property {number} maxPrice
+ * @property {string[]} features
+ * @property {string[]} [notIncluded]
+ * @property {string} [badge]
+ * @property {number} [userId]        
  */

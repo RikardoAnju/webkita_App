@@ -2,7 +2,7 @@ import { ArrowLeft, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import React, { useState } from "react";
 import { useUser } from "../../provider/user_provider";
 
-function Login({ onBackToHome, onForgotPassword, onGoToRegister }) {
+function Login({ onBackToHome, onForgotPassword, onGoToRegister, onGoToAdmin }) {
   const { loginUser } = useUser();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +36,16 @@ function Login({ onBackToHome, onForgotPassword, onGoToRegister }) {
     }
 
     setSuccess("Login berhasil!");
-    setTimeout(() => onBackToHome(), 1000);
+
+    // Redirect berdasarkan role
+    setTimeout(() => {
+      const role = result.user?.role;
+      if (role === "admin" || role === "developer") {
+        onGoToAdmin?.();
+      } else {
+        onBackToHome();
+      }
+    }, 800);
   };
 
   return (

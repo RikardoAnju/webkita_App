@@ -1,19 +1,256 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Calendar,
-  User,
-  Phone,
-  FileText,
-  TrendingUp,
-  RefreshCw
+import {
+  Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp,
+  Calendar, User, Phone, FileText, TrendingUp, RefreshCw, Layers, Tag, CreditCard,
 } from "lucide-react";
+import API from "../utils/api";
+import { usePayment } from "../provider/payment_provider";
+
+const calculateProgress = (status) => {
+  const map = { pending: 10, process: 50, approved: 75, done: 100, rejected: 0 };
+  return map[status] ?? 0;
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "–";
+  return new Date(dateString).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+};
+
+const calculateEstimatedCompletion = (createdAt, planTitle) => {
+  if (!createdAt) return "–";
+  const days = { Starter: 14, Professional: 30, Business: 60, Enterprise: 120 }[planTitle] || 30;
+  const d = new Date(createdAt);
+  d.setDate(d.getDate() + days);
+  return formatDate(d.toISOString());
+};
+
+const transformBackendData = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    const status = item.status || "pending";
+    const planTitle = item.plan_title;
+    const createdAt = item.created_at;
+    return {
+      id: item.id,
+      userId: item.user_id,
+      projectTitle: item.project_title,
+      category: item.category,
+      description: item.description,
+      skills: item.skills,
+      contactName: item.contact_name,
+      contactPhone: item.contact_phone,
+      additionalNotes: item.additional_notes || "",
+      planTitle,
+      planPriceRange: item.plan_price_range || null,
+      status,
+      progress: calculateProgress(status),
+      createdAt: formatDate(createdAt),
+      estimatedCompletion: calculateEstimatedCompletion(createdAt, planTitle),
+    };
+  });
+};
+
+const STATUS = {
+  pending: { label: "Menunggu", bg: "#FEF9C3", text: "#92400E", dot: "#F59E0B" },
+  process: { label: "Dalam Proses", bg: "#DBEAFE", text: "#1E40AF", dot: "#3B82F6" },
+  approved: { label: "Disetujui", bg: "#DCFCE7", text: "#166534", dot: "#22C55E" },
+  rejected: { label: "Ditolak", bg: "#FEE2E2", text: "#991B1B", dot: "#EF4444" },
+  done: { label: "Selesai", bg: "#F3E8FF", text: "#6B21A8", dot: "#A855F7" },
+};
+
+const PLAN_COLORS = {
+  Starter: { from: "#3B82F6", to: "#1D4ED8" },
+  Professional: { from: "#8B5CF6", to: "#6D28D9" },
+  Business: { from: "#10B981", to: "#065F46" },
+  Enterprise: { from: "#F59E0B", to: "#B45309" },
+};
+
+const FILTER_ORDER = ["all", "pending", "process", "approved", "rejected", "done"];
+
+// ─── load midtrans dinamis ────────────────────────────────────────────────────
+const loadMidtrans = () => {
+  return new Promise((resolve) => {
+    if (window.snap) return resolve();
+    const script = document.createElement("script");
+    script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+    script.setAttribute("data-client-key", "SB-Mid-client-4Lymuq91xf7MtA6u");
+    script.onload = resolve;
+    document.body.appendChild(script);
+  });
+};
+
+// ─── sub-components ───────────────────────────────────────────────────────────
+
+const StatusBadge = ({ status }) => {
+  const cfg = STATUS[status] || STATUS.pending;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+      background: cfg.bg, color: cfg.text, whiteSpace: "nowrap",
+    }}>
+      <span style={{ width: 7, height: 7, borderRadius: "50%", background: cfg.dot, flexShrink: 0 }} />
+      {cfg.label}
+    </span>
+  );
+};
+
+const ProgressBar = ({ value, status }) => {
+  const color = status === "done" ? "#22C55E" : status === "rejected" ? "#E5E7EB" : status === "approved" ? "#A855F7" : "#3B82F6";
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+        <span style={{ fontSize: 12, color: "#6B7280" }}>Progress</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color }}>{value}%</span>
+      </div>
+      <div style={{ height: 6, borderRadius: 99, background: "#E5E7EB", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${value}%`, borderRadius: 99, background: color, transition: "width 0.6s ease" }} />
+      </div>
+    </div>
+  );
+};
+
+const StatCard = ({ icon: Icon, label, value, color }) => (
+  <div style={{
+    background: "#fff", borderRadius: 16, padding: "20px 24px",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.07)", borderLeft: `4px solid ${color}`,
+    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+  }}>
+    <div>
+      <p style={{ margin: 0, fontSize: 13, color: "#6B7280", marginBottom: 4 }}>{label}</p>
+      <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#111827" }}>{value}</p>
+    </div>
+    <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Icon size={22} color={color} />
+    </div>
+  </div>
+);
+
+const Field = ({ label, children }) => (
+  <div>
+    <p style={{ margin: "0 0 3px", fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</p>
+    <p style={{ margin: 0, fontSize: 14, color: "#374151", lineHeight: 1.6, wordBreak: "break-word", whiteSpace: "pre-wrap" }}>{children}</p>
+  </div>
+);
+
+const OrderCard = ({ order, isExpanded, onToggle, onPay, payLoading }) => {
+  const planColor = PLAN_COLORS[order.planTitle] || { from: "#6B7280", to: "#374151" };
+  const canPay = order.planPriceRange && !["rejected", "done"].includes(order.status);
+
+  return (
+    <div style={{
+      background: "#fff", borderRadius: 16,
+      boxShadow: isExpanded ? "0 8px 30px rgba(0,0,0,0.10)" : "0 1px 4px rgba(0,0,0,0.07)",
+      overflow: "hidden", transition: "box-shadow 0.25s ease",
+      border: isExpanded ? "1.5px solid #3B82F6" : "1.5px solid transparent",
+    }}>
+      <div onClick={onToggle} style={{ padding: "20px 24px", cursor: "pointer" }}>
+        {order.planTitle && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "4px 12px", borderRadius: 20, marginBottom: 14,
+            background: `linear-gradient(90deg, ${planColor.from}, ${planColor.to})`,
+            color: "#fff", fontSize: 12, fontWeight: 700, letterSpacing: 0.3,
+          }}>
+            <Tag size={11} /> Paket {order.planTitle}
+          </div>
+        )}
+
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#111827", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {order.projectTitle}
+            </h3>
+            <p style={{ margin: 0, fontSize: 13, color: "#6B7280" }}>{order.category}</p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <StatusBadge status={order.status} />
+            <div style={{ color: "#9CA3AF" }}>
+              {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+          </div>
+        </div>
+
+        <ProgressBar value={order.progress} status={order.status} />
+
+        <div style={{ display: "flex", gap: 20, marginTop: 14, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 5 }}>
+            <Calendar size={13} /> Dibuat: {order.createdAt}
+          </span>
+          <span style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 5 }}>
+            <Clock size={13} /> Target: {order.estimatedCompletion}
+          </span>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div style={{ borderTop: "1px solid #F3F4F6", background: "#F9FAFB", padding: "24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
+            <div>
+              <h4 style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 700, color: "#374151", display: "flex", alignItems: "center", gap: 6 }}>
+                <FileText size={15} color="#3B82F6" /> Detail Proyek
+              </h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <Field label="Deskripsi">{order.description}</Field>
+                <Field label="Skill Dibutuhkan">{order.skills}</Field>
+                {order.additionalNotes && <Field label="Catatan Tambahan">{order.additionalNotes}</Field>}
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 700, color: "#374151", display: "flex", alignItems: "center", gap: 6 }}>
+                <User size={15} color="#3B82F6" /> Informasi Kontak
+              </h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <Field label="Nama Kontak">
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><User size={13} color="#6B7280" /> {order.contactName}</span>
+                </Field>
+                <Field label="Nomor Telepon">
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Phone size={13} color="#6B7280" /> {order.contactPhone}</span>
+                </Field>
+              </div>
+
+              <div style={{
+                marginTop: 20, padding: "14px 16px",
+                background: canPay ? "#EFF6FF" : "#F8FAFC",
+                borderRadius: 12,
+                border: `1px solid ${canPay ? "#BFDBFE" : "#E2E8F0"}`,
+              }}>
+                <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 600, color: canPay ? "#3B82F6" : "#94A3B8", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  {canPay ? "Harga yang Ditetapkan Admin" : "Menunggu Penetapan Harga"}
+                </p>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: canPay ? "#1D4ED8" : "#94A3B8" }}>
+                  {order.planPriceRange || "Admin belum menetapkan harga"}
+                </p>
+              </div>
+
+              {canPay && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onPay(order); }}
+                  disabled={payLoading}
+                  style={{
+                    marginTop: 14, width: "100%", padding: "13px",
+                    borderRadius: 12, border: "none",
+                    background: payLoading ? "#94A3B8" : "linear-gradient(90deg, #3B82F6, #6366F1)",
+                    color: "#fff", fontSize: 14, fontWeight: 700,
+                    cursor: payLoading ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    transition: "opacity 0.2s",
+                  }}
+                >
+                  <CreditCard size={16} />
+                  {payLoading ? "Memproses..." : `Bayar Sekarang — ${order.planPriceRange}`}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── main component ───────────────────────────────────────────────────────────
 
 const OrderDashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -21,232 +258,84 @@ const OrderDashboard = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userId, setUserId] = useState(null); 
+  const [payLoading, setPayLoading] = useState(false);
 
-  const API_BASE_URL = "http://localhost:8080/v1";
+  const { createTransaction, openSnapPayment } = usePayment();
 
   const fetchOrders = async () => {
     setIsLoading(true);
     setError(null);
-    
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      let url = `${API_BASE_URL}/project`;
-      
-      if (userId) {
-        url = `${API_BASE_URL}/project/user/${userId}`;
-      }
-
-      const response = await fetch(url, { headers });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      const transformedOrders = transformBackendData(data.data || data);
-      setOrders(transformedOrders);
-      
+      const data = await API.get("/project/my");
+      setOrders(transformBackendData(data.data || data));
     } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError(err.message);
+      setError(err?.message || "Terjadi kesalahan saat memuat data.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const transformBackendData = (backendData) => {
-    if (!Array.isArray(backendData)) {
-      return [];
-    }
+  useEffect(() => { fetchOrders(); }, []);
 
-    return backendData.map(item => ({
-      id: item.ID || item.id,
-      userId: item.user_id || item.UserID,
-      projectTitle: item.project_title || item.ProjectTitle,
-      category: item.category || item.Category,
-      description: item.description || item.Description,
-      skills: item.skills || item.Skills,
-      contactName: item.contact_name || item.ContactName,
-      contactPhone: item.contact_phone || item.ContactPhone,
-      additionalNotes: item.additional_notes || item.AdditionalNotes || "",
-      planTitle: item.plan_title || item.PlanTitle,
-      planPriceRange: getPriceRange(item.plan_title || item.PlanTitle),
-      status: item.status || item.Status || "pending",
-      progress: calculateProgress(item.status || item.Status),
-      createdAt: formatDate(item.created_at || item.CreatedAt),
-      estimatedCompletion: calculateEstimatedCompletion(
-        item.created_at || item.CreatedAt,
-        item.plan_title || item.PlanTitle
-      )
-    }));
-  };
-
-  const getPriceRange = (planTitle) => {
-    const priceRanges = {
-      Starter: "Rp 3.000.000 - Rp 7.000.000",
-      Professional: "Rp 7.000.000 - Rp 15.000.000",
-      Business: "Rp 15.000.000 - Rp 30.000.000",
-      Enterprise: "Rp 30.000.000 - Rp 100.000.000"
-    };
-    return priceRanges[planTitle] || "Hubungi kami";
-  };
-
-  const calculateProgress = (status) => {
-    const progressMap = {
-      pending: 0,
-      in_progress: 45,
-      revision: 75,
-      completed: 100,
-      cancelled: 0
-    };
-    return progressMap[status] || 0;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
-  };
-
-  const calculateEstimatedCompletion = (createdAt, planTitle) => {
-    if (!createdAt) return "-";
-    
-    const daysToComplete = {
-      Starter: 14,
-      Professional: 30,
-      Business: 60,
-      Enterprise: 120
-    };
-    
-    const days = daysToComplete[planTitle] || 30;
-    const startDate = new Date(createdAt);
-    const estimatedDate = new Date(startDate);
-    estimatedDate.setDate(startDate.getDate() + days);
-    
-    return estimatedDate.toISOString().split('T')[0];
-  };
-
-  const updateProjectStatus = async (projectId, newStatus) => {
+  // ── handle bayar ──
+  const handlePay = async (order) => {
+    setPayLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(
-        `${API_BASE_URL}/project/${projectId}/status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ status: newStatus })
-        }
-      );
+      await loadMidtrans(); // ← load Midtrans hanya saat mau bayar
 
-      if (!response.ok) {
-        throw new Error('Failed to update status');
+      const result = await createTransaction(order.id, {
+        amount: 500000,
+        customerName: order.contactName,
+        customerEmail: "",
+        customerPhone: order.contactPhone,
+      });
+
+      if (!result.success) {
+        alert(result.message || "Gagal membuat transaksi");
+        return;
       }
 
-      fetchOrders();
-      
+      openSnapPayment(
+        result.data.snap_token,
+        () => { alert("Pembayaran berhasil! Tim kami akan segera menghubungi Anda."); fetchOrders(); },
+        () => { alert("Pembayaran pending. Silakan selesaikan pembayaran Anda."); },
+        () => { alert("Pembayaran gagal. Silakan coba lagi."); },
+      );
     } catch (err) {
-      console.error('Error updating status:', err);
-      alert('Gagal mengubah status project');
+      alert("Terjadi kesalahan saat memproses pembayaran");
+    } finally {
+      setPayLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, [userId]);
-
-  const statusConfig = {
-    pending: {
-      label: "Menunggu",
-      color: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      icon: Clock,
-      iconColor: "text-yellow-600"
-    },
-    in_progress: {
-      label: "Dalam Proses",
-      color: "bg-blue-100 text-blue-800 border-blue-300",
-      icon: TrendingUp,
-      iconColor: "text-blue-600"
-    },
-    revision: {
-      label: "Revisi",
-      color: "bg-orange-100 text-orange-800 border-orange-300",
-      icon: AlertCircle,
-      iconColor: "text-orange-600"
-    },
-    completed: {
-      label: "Selesai",
-      color: "bg-green-100 text-green-800 border-green-300",
-      icon: CheckCircle,
-      iconColor: "text-green-600"
-    },
-    cancelled: {
-      label: "Dibatalkan",
-      color: "bg-red-100 text-red-800 border-red-300",
-      icon: XCircle,
-      iconColor: "text-red-600"
-    }
-  };
-
-  const planColors = {
-    Starter: "from-blue-500 to-blue-600",
-    Professional: "from-purple-500 to-purple-600",
-    Business: "from-green-500 to-green-600",
-    Enterprise: "from-orange-500 to-orange-600"
-  };
-
-  const filteredOrders = filterStatus === "all" 
-    ? orders 
-    : orders.filter(order => order.status === filterStatus);
+  const filteredOrders = filterStatus === "all" ? orders : orders.filter((o) => o.status === filterStatus);
 
   const stats = {
     total: orders.length,
-    pending: orders.filter(o => o.status === "pending").length,
-    in_progress: orders.filter(o => o.status === "in_progress").length,
-    completed: orders.filter(o => o.status === "completed").length
-  };
-
-  const toggleExpand = (orderId) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+    pending: orders.filter((o) => o.status === "pending").length,
+    process: orders.filter((o) => o.status === "process").length,
+    done: orders.filter((o) => o.status === "done").length,
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-semibold">Memuat data orderan...</p>
-        </div>
+      <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <div style={{ width: 44, height: 44, border: "3px solid #E5E7EB", borderTop: "3px solid #3B82F6", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <p style={{ color: "#6B7280", fontSize: 14, margin: 0 }}>Memuat data orderan…</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Gagal Memuat Data</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={fetchOrders}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2 mx-auto"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Coba Lagi
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ background: "#fff", borderRadius: 20, padding: "40px 32px", textAlign: "center", maxWidth: 380, width: "100%", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
+          <XCircle size={48} color="#EF4444" style={{ marginBottom: 16 }} />
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: "#111827" }}>Gagal Memuat Data</h2>
+          <p style={{ margin: "0 0 24px", color: "#6B7280", fontSize: 14 }}>{error}</p>
+          <button onClick={fetchOrders} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 10, border: "none", cursor: "pointer", background: "#3B82F6", color: "#fff", fontWeight: 600, fontSize: 14 }}>
+            <RefreshCw size={15} /> Coba Lagi
           </button>
         </div>
       </div>
@@ -254,228 +343,53 @@ const OrderDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* Header - Judul di tengah, tombol refresh di kanan */}
-        <div className="mb-8 flex items-center justify-between relative">
-          <div className="w-full text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard Orderan</h1>
-            <p className="text-gray-600">Pantau status dan progress semua proyek Anda</p>
-          </div>
-          <button
-            onClick={fetchOrders}
-            className="bg-white p-3 rounded-lg shadow-md hover:shadow-lg transition absolute right-0 top-1/2 transform -translate-y-1/2"
-            title="Refresh data"
-          >
-            <RefreshCw className="w-5 h-5 text-blue-600" />
-          </button>
+    <div style={{ minHeight: "100vh", background: "#F3F4F6", padding: "32px 16px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#111827" }}>Orderan Saya</h1>
+          <p style={{ margin: "4px 0 0", fontSize: 14, color: "#6B7280" }}>Pantau status dan progress semua proyek Anda</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Orderan</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <Package className="w-10 h-10 text-blue-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-yellow-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Menunggu</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.pending}</p>
-              </div>
-              <Clock className="w-10 h-10 text-yellow-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Dalam Proses</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.in_progress}</p>
-              </div>
-              <TrendingUp className="w-10 h-10 text-blue-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Selesai</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.completed}</p>
-              </div>
-              <CheckCircle className="w-10 h-10 text-green-500" />
-            </div>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 28 }}>
+          <StatCard icon={Layers} label="Total Orderan" value={stats.total} color="#3B82F6" />
+          <StatCard icon={Clock} label="Menunggu" value={stats.pending} color="#F59E0B" />
+          <StatCard icon={TrendingUp} label="Dalam Proses" value={stats.process} color="#6366F1" />
+          <StatCard icon={CheckCircle} label="Selesai" value={stats.done} color="#22C55E" />
         </div>
 
-        {/* Filter Buttons */}
-        <div className="bg-white rounded-xl p-4 shadow-md mb-6">
-          <div className="flex flex-wrap gap-2">
-            {["all", "pending", "in_progress", "revision", "completed", "cancelled"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
-                  filterStatus === status
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {status === "all" ? "Semua" : statusConfig[status]?.label || status}
+        <div style={{ background: "#fff", borderRadius: 12, padding: "10px 14px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: 20, display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {FILTER_ORDER.map((s) => {
+            const active = filterStatus === s;
+            return (
+              <button key={s} onClick={() => setFilterStatus(s)} style={{ padding: "6px 16px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: active ? 700 : 500, background: active ? "#3B82F6" : "#F3F4F6", color: active ? "#fff" : "#374151", transition: "all 0.15s" }}>
+                {s === "all" ? "Semua" : STATUS[s]?.label || s}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Orders List */}
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {filteredOrders.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-md">
-              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg font-semibold">Tidak ada orderan</p>
-              <p className="text-gray-500 text-sm">Orderan akan muncul di sini setelah Anda membuat pesanan</p>
+            <div style={{ background: "#fff", borderRadius: 16, padding: "64px 24px", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+              <Package size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#6B7280" }}>Belum ada orderan</p>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9CA3AF" }}>Orderan Anda akan muncul di sini</p>
             </div>
           ) : (
-            filteredOrders.map((order) => {
-              const StatusIcon = statusConfig[order.status]?.icon || Package;
-              const isExpanded = expandedOrder === order.id;
-
-              return (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
-                >
-                  {/* Header */}
-                  <div
-                    className="p-6 cursor-pointer"
-                    onClick={() => toggleExpand(order.id)}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-bold text-gray-900">
-                            {order.projectTitle}
-                          </h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusConfig[order.status]?.color}`}>
-                            {statusConfig[order.status]?.label}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600">{order.category}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <StatusIcon className={`w-6 h-6 ${statusConfig[order.status]?.iconColor}`} />
-                        {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Plan Badge */}
-                    <div className={`inline-block bg-gradient-to-r ${planColors[order.planTitle] || "from-gray-500 to-gray-600"} text-white px-4 py-1 rounded-lg text-sm font-bold mb-4`}>
-                      Paket {order.planTitle}
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mb-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-semibold text-gray-700">Progress</span>
-                        <span className="text-sm font-bold text-blue-600">{order.progress}%</span>
-                      </div>
-                      <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            order.progress === 100
-                              ? "bg-green-500"
-                              : order.progress >= 75
-                              ? "bg-blue-500"
-                              : order.progress >= 50
-                              ? "bg-yellow-500"
-                              : "bg-orange-500"
-                          }`}
-                          style={{ width: `${order.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Quick Info */}
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>Dibuat: {order.createdAt}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>Target: {order.estimatedCompletion}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expanded Details */}
-                  {isExpanded && (
-                    <div className="border-t border-gray-200 p-6 bg-gray-50">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Left Column */}
-                        <div>
-                          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-blue-600" />
-                            Detail Proyek
-                          </h4>
-                          <div className="space-y-3">
-                            <div>
-                              <p className="text-xs font-semibold text-gray-500 mb-1">Deskripsi</p>
-                              <p className="text-sm text-gray-700">{order.description}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold text-gray-500 mb-1">Skills Required</p>
-                              <p className="text-sm text-gray-700">{order.skills}</p>
-                            </div>
-                            {order.additionalNotes && (
-                              <div>
-                                <p className="text-xs font-semibold text-gray-500 mb-1">Catatan Tambahan</p>
-                                <p className="text-sm text-gray-700">{order.additionalNotes}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Right Column */}
-                        <div>
-                          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <User className="w-5 h-5 text-blue-600" />
-                            Informasi Kontak
-                          </h4>
-                          <div className="space-y-3">
-                            <div>
-                              <p className="text-xs font-semibold text-gray-500 mb-1">Nama</p>
-                              <p className="text-sm text-gray-700">{order.contactName}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold text-gray-500 mb-1">Telepon</p>
-                              <p className="text-sm text-gray-700">{order.contactPhone}</p>
-                            </div>
-                            <div className="bg-white rounded-lg p-4 border border-gray-200">
-                              <p className="text-xs font-semibold text-gray-500 mb-1">Range Harga</p>
-                              <p className="text-lg font-bold text-blue-600">{order.planPriceRange}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })
+            filteredOrders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                isExpanded={expandedOrder === order.id}
+                onToggle={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                onPay={handlePay}
+                payLoading={payLoading}
+              />
+            ))
           )}
         </div>
+
       </div>
     </div>
   );
