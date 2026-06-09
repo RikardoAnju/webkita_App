@@ -8,6 +8,7 @@ import Login from "../auth/Login";
 import Register from "../auth/Register";
 import ProfilePage from "../profile/profile";
 import CaraKerja from "../carakerja";
+import InvoicePage from "../InvoicePage";
 import Harga from "../harga";
 import { PaymentProvider } from "../../provider/payment_provider.jsx";
 import Orderan from "../orderan";
@@ -166,6 +167,7 @@ function AppRoutes() {
               } />
               <Route path="/orderan" element={<Orderan onBackToHome={() => navigate("/")} />} />
               <Route path="/profile" element={<ProfilePage onBackToHome={() => navigate("/")} />} />
+              <Route path="/invoice/:projectId" element={<InvoicePage />} />
               <Route path="/informasidetail" element={
                 <InformasiDetail
                   plan={selectedPlanDetails}

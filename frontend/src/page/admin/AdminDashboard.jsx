@@ -85,7 +85,7 @@ const AdminDashboard = () => {
       const [ordersRes, usersRes, txRes] = await Promise.all([
         API.get("/project"),
         API.get("/users"),
-        API.get("/payments/all"),
+        API.get("/payment/all"),
       ]);
       setOrders((ordersRes.data || ordersRes).map(transformProject));
       setUsers((usersRes.data  || usersRes).map(transformUser));

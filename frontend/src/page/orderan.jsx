@@ -3,8 +3,10 @@ import {
   Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp,
   Calendar, User, Phone, FileText, TrendingUp, RefreshCw, Layers, Tag, CreditCard,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import API from "../utils/api";
 import { usePayment } from "../provider/payment_provider";
+import { useUser } from "../provider/user_provider";
 
 const calculateProgress = (status) => {
   const map = { pending: 10, process: 50, approved: 75, done: 100, rejected: 0 };
@@ -24,6 +26,12 @@ const calculateEstimatedCompletion = (createdAt, planTitle) => {
   return formatDate(d.toISOString());
 };
 
+const formatRupiah = (value) => {
+  if (!value) return null;
+  const num = typeof value === "string" ? parseInt(value.replace(/\D/g, "")) : value;
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(num);
+};
+
 const transformBackendData = (raw) => {
   if (!Array.isArray(raw)) return [];
   return raw.map((item) => {
@@ -41,7 +49,7 @@ const transformBackendData = (raw) => {
       contactPhone: item.contact_phone,
       additionalNotes: item.additional_notes || "",
       planTitle,
-      planPriceRange: item.plan_price_range || null,
+      planPriceRange: formatRupiah(item.plan_price_range),
       status,
       progress: calculateProgress(status),
       createdAt: formatDate(createdAt),
@@ -67,7 +75,13 @@ const PLAN_COLORS = {
 
 const FILTER_ORDER = ["all", "pending", "process", "approved", "rejected", "done"];
 
-// ─── load midtrans dinamis ────────────────────────────────────────────────────
+const parseAmount = (priceRange) => {
+  if (!priceRange) return 0;
+  const cleaned = priceRange.replace(/\./g, "").replace(/,/g, "");
+  const match = cleaned.match(/\d{4,}/);
+  return match ? parseInt(match[0]) : 0;
+};
+
 const loadMidtrans = () => {
   return new Promise((resolve) => {
     if (window.snap) return resolve();
@@ -78,8 +92,6 @@ const loadMidtrans = () => {
     document.body.appendChild(script);
   });
 };
-
-// ─── sub-components ───────────────────────────────────────────────────────────
 
 const StatusBadge = ({ status }) => {
   const cfg = STATUS[status] || STATUS.pending;
@@ -133,7 +145,8 @@ const Field = ({ label, children }) => (
   </div>
 );
 
-const OrderCard = ({ order, isExpanded, onToggle, onPay, payLoading }) => {
+const OrderCard = ({ order, isExpanded, onToggle, onPay, payLoading, isPaid }) => {
+  const navigate = useNavigate();
   const planColor = PLAN_COLORS[order.planTitle] || { from: "#6B7280", to: "#374151" };
   const canPay = order.planPriceRange && !["rejected", "done"].includes(order.status);
 
@@ -225,22 +238,50 @@ const OrderCard = ({ order, isExpanded, onToggle, onPay, payLoading }) => {
               </div>
 
               {canPay && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onPay(order); }}
-                  disabled={payLoading}
-                  style={{
-                    marginTop: 14, width: "100%", padding: "13px",
-                    borderRadius: 12, border: "none",
-                    background: payLoading ? "#94A3B8" : "linear-gradient(90deg, #3B82F6, #6366F1)",
-                    color: "#fff", fontSize: 14, fontWeight: 700,
-                    cursor: payLoading ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  <CreditCard size={16} />
-                  {payLoading ? "Memproses..." : `Bayar Sekarang — ${order.planPriceRange}`}
-                </button>
+                isPaid ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
+                    {/* Status Lunas */}
+                    <div style={{
+                      width: "100%", padding: "13px", borderRadius: 12,
+                      background: "#DCFCE7", border: "1px solid #86EFAC",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    }}>
+                      <CheckCircle size={16} color="#16A34A" />
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "#16A34A" }}>Pembayaran Lunas</span>
+                    </div>
+
+                    {/* Tombol Invoice */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/invoice/${order.id}`); }}
+                      style={{
+                        width: "100%", padding: "13px", borderRadius: 12,
+                        border: "1px solid #BFDBFE", background: "#EFF6FF",
+                        color: "#1D4ED8", fontSize: 14, fontWeight: 700,
+                        cursor: "pointer", display: "flex", alignItems: "center",
+                        justifyContent: "center", gap: 8,
+                      }}
+                    >
+                      <FileText size={15} /> Lihat Invoice
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onPay(order); }}
+                    disabled={payLoading}
+                    style={{
+                      marginTop: 14, width: "100%", padding: "13px",
+                      borderRadius: 12, border: "none",
+                      background: payLoading ? "#94A3B8" : "linear-gradient(90deg, #3B82F6, #6366F1)",
+                      color: "#fff", fontSize: 14, fontWeight: 700,
+                      cursor: payLoading ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      transition: "opacity 0.2s",
+                    }}
+                  >
+                    <CreditCard size={16} />
+                    {payLoading ? "Memproses..." : `Bayar Sekarang — ${order.planPriceRange}`}
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -259,15 +300,34 @@ const OrderDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [payLoading, setPayLoading] = useState(false);
+  const [paidProjects, setPaidProjects] = useState({});
 
   const { createTransaction, openSnapPayment } = usePayment();
+  const { user } = useUser();
+
+  const fetchPaymentStatuses = async (orderList) => {
+    const results = {};
+    await Promise.all(
+      orderList.map(async (order) => {
+        try {
+          const res = await API.get(`/payment/project/${order.id}`);
+          results[order.id] = res?.isPaid === true;
+        } catch {
+          results[order.id] = false;
+        }
+      })
+    );
+    setPaidProjects(results);
+  };
 
   const fetchOrders = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const data = await API.get("/project/my");
-      setOrders(transformBackendData(data.data || data));
+      const transformed = transformBackendData(data.data || data);
+      setOrders(transformed);
+      await fetchPaymentStatuses(transformed);
     } catch (err) {
       setError(err?.message || "Terjadi kesalahan saat memuat data.");
     } finally {
@@ -277,16 +337,26 @@ const OrderDashboard = () => {
 
   useEffect(() => { fetchOrders(); }, []);
 
-  // ── handle bayar ──
   const handlePay = async (order) => {
+    if (!user?.email) {
+      alert("Email akun tidak ditemukan. Silakan lengkapi profil Anda terlebih dahulu.");
+      return;
+    }
+
+    const amount = parseAmount(order.planPriceRange);
+    if (!amount || amount <= 0) {
+      alert("Harga tidak valid. Silakan hubungi admin.");
+      return;
+    }
+
     setPayLoading(true);
     try {
-      await loadMidtrans(); // ← load Midtrans hanya saat mau bayar
+      await loadMidtrans();
 
       const result = await createTransaction(order.id, {
-        amount: 500000,
+        amount,
         customerName: order.contactName,
-        customerEmail: "",
+        customerEmail: user.email,
         customerPhone: order.contactPhone,
       });
 
@@ -297,7 +367,10 @@ const OrderDashboard = () => {
 
       openSnapPayment(
         result.data.snap_token,
-        () => { alert("Pembayaran berhasil! Tim kami akan segera menghubungi Anda."); fetchOrders(); },
+        () => {
+          alert("Pembayaran berhasil! Tim kami akan segera menghubungi Anda.");
+          fetchOrders();
+        },
         () => { alert("Pembayaran pending. Silakan selesaikan pembayaran Anda."); },
         () => { alert("Pembayaran gagal. Silakan coba lagi."); },
       );
@@ -385,6 +458,7 @@ const OrderDashboard = () => {
                 onToggle={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
                 onPay={handlePay}
                 payLoading={payLoading}
+                isPaid={paidProjects[order.id] === true}
               />
             ))
           )}
