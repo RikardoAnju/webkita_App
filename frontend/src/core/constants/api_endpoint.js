@@ -21,6 +21,6 @@ export const ENDPOINTS = {
   DELETE_PROJECT: "/project",
   CREATE_PAYMENT: (projectId) => `/payment/create/${projectId}`,
   GET_PAYMENT_STATUS: (orderId) => `/payment/status/${orderId}`,
-  UPLOAD_ATTACHMENT: (projectId) => `/attachment/${projectId}`,
-  GET_ATTACHMENTS: (projectId) => `/attachment/${projectId}`,
+  UPLOAD_ATTACHMENT: (projectId) => `/attachments/${projectId}`,
+  GET_ATTACHMENTS: (projectId) => `/attachments/${projectId}`,
 };
