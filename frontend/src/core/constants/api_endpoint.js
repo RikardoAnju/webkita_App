@@ -23,4 +23,13 @@ export const ENDPOINTS = {
   GET_PAYMENT_STATUS: (orderId) => `/payment/status/${orderId}`,
   UPLOAD_ATTACHMENT: (projectId) => `/attachments/${projectId}`,
   GET_ATTACHMENTS: (projectId) => `/attachments/${projectId}`,
+  // PRICING
+  GET_PUBLIC_PRICING: "/pricing/public",
+  GET_PRICING_BY_TIER: (tier) => `/pricing/public/tier/${tier}`,
+  GET_ALL_PRICING: "/pricing",
+  GET_PRICING_BY_ID: (id) => `/pricing/${id}`,
+  CREATE_PRICING: "/pricing",
+  UPDATE_PRICING: (id) => `/pricing/${id}`,
+  DELETE_PRICING: (id) => `/pricing/${id}`,
+  TOGGLE_PRICING_ACTIVE: (id) => `/pricing/${id}/toggle-active`,
 };

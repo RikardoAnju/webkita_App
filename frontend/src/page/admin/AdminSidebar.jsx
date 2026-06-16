@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { LayoutDashboard, Package, Users, LogOut, ChevronRight, Menu, X, CreditCard } from "lucide-react";
+import { LayoutDashboard, Package, Users, LogOut, ChevronRight, Menu, X, CreditCard,  Tag } from "lucide-react";
 
 const NAV = [
   { id: "dashboard",    label: "Dashboard",   icon: LayoutDashboard },
   { id: "orders",       label: "Orderan",      icon: Package          },
   { id: "users",        label: "Pengguna",     icon: Users            },
   { id: "transactions", label: "Transaksi",    icon: CreditCard       },
+  { id: "pricing",      label: "Paket Layanan", icon: Tag              },
 ];
 
 const AdminSidebar = ({ active, onChange, onLogout, orderCount, userCount, transactionCount }) => {
