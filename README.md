@@ -1,41 +1,25 @@
-# BackendFramework
-UIB Backend Framework (Golang Based API)
+# WebKita
 
-# Untuk Dependencies Check file requirement.txt
-Untuk Bisa Generate PDF pastikan install ini terlebih dahulu https://wkhtmltopdf.org/downloads.html
+## Deskripsi Umum Project
 
-# Folder Structure
-``` 
-/
-├── cmd
-│   └── main.go
-├── internal
-│   ├── config
-│   │   ├── database.go
-│   │   └── bucket.go
-│   ├── controller
-│   │   └── userController.go
-│   ├── database
-│   │   └── dbAkademik.go
-│   ├── model
-│   │   └── userModel.go
-│   ├── middleware
-│   │   └── reqAuth.go
-│   ├── route
-│   │   ├── v1
-│   │   │   └── init.go
-│   │   ├── v2
-│   │   │   └── init.go
-│   │   └── router.go
-│   ├── service
-│   │   └── userService.go
-│   └── thirdparty
-│       └── bucket.go
-├── log
-│   └── error.log
-├── web
-│   ├── html
-│   ├── css
-│   └── assets
-└── temp
-```
+WebKita adalah aplikasi web dengan arsitektur **decoupled / REST API**, memisahkan backend dan frontend secara independen:
+
+- **Backend**: REST API dibangun dengan [Hono](https://hono.dev/) dan berjalan di [Cloudflare Workers](https://workers.cloudflare.com/), menggunakan [Supabase](https://supabase.com/) sebagai database & autentikasi.
+- **Frontend**: Single Page Application dibangun dengan [React](https://react.dev/) + [Vite](https://vitejs.dev/) dan [Tailwind CSS](https://tailwindcss.com/).
+
+> WebKita adalah platform marketplace yang menghubungkan pemilik bisnis dengan developer profesional untuk pengerjaan proyek website. Target pengguna utama meliputi pelaku bisnis yang membutuhkan jasa pengembangan website serta developer/freelancer yang ingin menawarkan jasanya secara terpercaya. Fitur utama platform ini mencakup sistem pencocokan (matching) klien dengan developer, manajemen proyek pihak ketiga yang aman, serta jaminan keamanan transaksi untuk memastikan proyek berjalan lancar dari awal hingga selesai.
+---
+
+## Tech Stack
+
+| Layer     | Teknologi                              |
+|-----------|-----------------------------------------|
+| Backend   | Hono, Cloudflare Workers, Wrangler      |
+| Database  | Supabase (PostgreSQL)                   |
+| Frontend  | React, Vite, Tailwind CSS               |
+| Auth      | JWT                                      |
+| Dev Tools | Docker, Docker Compose                  |
+
+---
+
+## Struktur Folder
