@@ -17,10 +17,36 @@ export const attachmentRoute = new Hono<{ Bindings: Env; Variables: Variables }>
 
 attachmentRoute.use('*', authMiddleware)
 
+// Semua endpoint di sini sebelumnya cuma cek "sudah login", tanpa cek
+// apakah project itu benar milik user yang request -- siapa pun yang login
+// bisa upload/lihat/download lampiran project ORANG LAIN. Helper ini
+// menutup celah itu: hanya pemilik project atau admin/developer yang boleh.
+async function assertProjectAccess(
+  supabase: ReturnType<typeof createSupabase>,
+  projectId: number,
+  user: { user_id: number; role?: string }
+) {
+  if (user.role === 'admin' || user.role === 'developer') return
+  const { data: project } = await supabase
+    .from('projects')
+    .select('user_id')
+    .eq('id', projectId)
+    .single()
+  if (!project || project.user_id !== user.user_id) {
+    const error = new Error('Forbidden') as Error & { code?: number }
+    error.code = 403
+    throw error
+  }
+}
+
 // POST /attachments/:projectId
 attachmentRoute.post('/:projectId', async (c) => {
   try {
     const projectId = Number(c.req.param('projectId'))
+    const user = c.get('user')
+    const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+    await assertProjectAccess(supabase, projectId, user)
+
     const formData = await c.req.formData()
     const file = formData.get('file') as File
 
@@ -28,7 +54,6 @@ attachmentRoute.post('/:projectId', async (c) => {
       return c.json({ status: 'error', message: 'File tidak ditemukan' }, 400)
     }
 
-    const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
     const attachment = await uploadAttachment(supabase, projectId, file)
 
     return c.json({ status: 'success', message: 'File berhasil diupload', data: attachment }, 201)
@@ -41,12 +66,15 @@ attachmentRoute.post('/:projectId', async (c) => {
 attachmentRoute.get('/:projectId', async (c) => {
   try {
     const projectId = Number(c.req.param('projectId'))
+    const user = c.get('user')
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+    await assertProjectAccess(supabase, projectId, user)
+
     const attachments = await getAttachmentsByProject(supabase, projectId)
 
     return c.json({ status: 'success', data: attachments })
   } catch (err: any) {
-    return c.json({ status: 'error', message: err?.message || 'Gagal ambil lampiran' }, 500)
+    return c.json({ status: 'error', message: err?.message || 'Gagal ambil lampiran' }, err?.code || 500)
   }
 })
 
@@ -55,6 +83,7 @@ attachmentRoute.get('/:projectId', async (c) => {
 attachmentRoute.get('/download/:id', async (c) => {
   try {
     const id = Number(c.req.param('id'))
+    const user = c.get('user')
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
     // Ambil data attachment
@@ -65,6 +94,8 @@ attachmentRoute.get('/download/:id', async (c) => {
       .single()
 
     if (error || !att) return c.json({ status: 'error', message: 'File tidak ditemukan' }, 404)
+
+    await assertProjectAccess(supabase, att.project_id, user)
 
     // Download dari storage
     const { data: file, error: dlError } = await supabase.storage
@@ -80,6 +111,6 @@ attachmentRoute.get('/download/:id', async (c) => {
       },
     })
   } catch (err: any) {
-    return c.json({ status: 'error', message: err?.message || 'Gagal download' }, 500)
+    return c.json({ status: 'error', message: err?.message || 'Gagal download' }, err?.code || 500)
   }
 })

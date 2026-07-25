@@ -96,13 +96,33 @@ export async function createTransaction(
   }
 }
 
+async function sha512Hex(input: string) {
+  const data = new TextEncoder().encode(input)
+  const hashBuffer = await crypto.subtle.digest('SHA-512', data)
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 export async function handleNotification(
   supabase: SupabaseClient,
-  notification: any
+  notification: any,
+  serverKey: string
 ) {
-  const { order_id, transaction_status, fraud_status } = notification
+  const { order_id, status_code, gross_amount, signature_key, transaction_status, fraud_status } =
+    notification
 
   if (!order_id) throw appError('Order ID tidak ditemukan', 400)
+
+  // Verifikasi signature Midtrans supaya notifikasi tidak bisa dipalsukan
+  // (tanpa ini, siapa pun bisa POST body palsu dan menandai transaksi apa
+  // pun sebagai "paid" tanpa benar-benar membayar).
+  const expectedSignature = await sha512Hex(
+    `${order_id}${status_code}${gross_amount}${serverKey}`
+  )
+  if (!signature_key || signature_key !== expectedSignature) {
+    throw appError('Signature tidak valid', 403)
+  }
 
   let status = 'pending'
 

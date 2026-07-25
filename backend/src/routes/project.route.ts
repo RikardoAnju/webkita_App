@@ -138,8 +138,17 @@ projectRoute.delete('/:id', async (c) => {
 projectRoute.get('/:id', async (c) => {
   try {
     const id = Number(c.req.param('id'))
+    const user = c.get('user')
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
     const project = await getProjectById(supabase, id)
+
+    // Cegah user lain mengintip detail project (kontak, harga, dsb) milik orang lain
+    const isOwner = project.user_id === user.user_id
+    const isStaff = user.role === 'admin' || user.role === 'developer'
+    if (!isOwner && !isStaff) {
+      return c.json({ status: 'error', message: 'Forbidden' }, 403)
+    }
+
     return c.json({ status: 'success', message: 'Detail project berhasil diambil', data: project })
   } catch (err: any) {
     return c.json({ status: 'error', message: err?.message || 'Gagal mengambil detail project' }, 500)

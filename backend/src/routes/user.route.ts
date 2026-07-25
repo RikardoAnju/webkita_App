@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { createSupabase } from '../lib/supabase'
-import { authMiddleware } from '../middleware/auth.middleware'
+import { authMiddleware, roleMiddleware } from '../middleware/auth.middleware'
 
 type Env = {
   SUPABASE_URL: string
@@ -11,7 +11,9 @@ type Env = {
 export const userRoute = new Hono<{ Bindings: Env }>()
 
 
-userRoute.get('/', authMiddleware, async (c) => {
+// Daftar & hapus user berisi data pribadi (email, telepon) & aksi destruktif —
+// dulu cuma butuh login (role apa saja), sekarang wajib admin/developer.
+userRoute.get('/', authMiddleware, roleMiddleware('admin', 'developer'), async (c) => {
   try {
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -35,7 +37,7 @@ userRoute.get('/', authMiddleware, async (c) => {
 })
 
 
-userRoute.delete('/:username', authMiddleware, async (c) => {
+userRoute.delete('/:username', authMiddleware, roleMiddleware('admin'), async (c) => {
   try {
     const username = c.req.param('username')
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)

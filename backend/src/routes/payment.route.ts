@@ -40,6 +40,7 @@ paymentRoute.get('/all', authMiddleware, async (c) => {
 paymentRoute.get('/status/:orderId', authMiddleware, async (c) => {
   try {
     const orderId = c.req.param('orderId')
+    const user = c.get('user')
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
     const { data, error } = await supabase
@@ -49,6 +50,11 @@ paymentRoute.get('/status/:orderId', authMiddleware, async (c) => {
       .single()
 
     if (error) throw new Error('Transaksi tidak ditemukan')
+
+    // Cegah user lain mengintip transaksi orang lain lewat order_id
+    if (data.user_id !== user.user_id && user.role !== 'admin' && user.role !== 'developer') {
+      return c.json({ status: 'error', message: 'Forbidden' }, 403)
+    }
 
     return c.json({ status: 'success', data })
   } catch (err: any) {
@@ -88,7 +94,7 @@ paymentRoute.post('/notification', async (c) => {
     const body = await c.req.json()
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
-    await handleNotification(supabase, body)
+    await handleNotification(supabase, body, c.env.MIDTRANS_SERVER_KEY)
 
     return c.json({ status: 'success' })
   } catch (err: any) {
@@ -100,7 +106,19 @@ paymentRoute.post('/notification', async (c) => {
 paymentRoute.get('/project/:projectId', authMiddleware, async (c) => {
   try {
     const projectId = Number(c.req.param('projectId'))
+    const user = c.get('user')
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+
+    if (user.role !== 'admin' && user.role !== 'developer') {
+      const { data: project } = await supabase
+        .from('projects')
+        .select('user_id')
+        .eq('id', projectId)
+        .single()
+      if (!project || project.user_id !== user.user_id) {
+        return c.json({ status: 'error', message: 'Forbidden' }, 403)
+      }
+    }
 
     const { data, error } = await supabase
       .from('payments')
