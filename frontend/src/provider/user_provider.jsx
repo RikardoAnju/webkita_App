@@ -3,28 +3,46 @@ import API from "../core/utils/api_client";
 import { ENDPOINTS } from "../core/constants/api_endpoint";
 
 const mapResponseToUser = (r) => ({
-  id: r.id,
-  username: r.username,
-  firstName: r.first_name,
-  lastName: r.last_name,
-  email: r.email,
-  phone: r.phone,
-  groupId: r.group_id,
-  role: r.role ?? "user",
-  isAktif: r.is_aktif,
-  isEmailVerified: r.is_email_verified,
-  subscribeNewsletter: r.subscribe_newsletter,
-  createdAt: r.createdAt,
+  id: r?.id,
+  username: r?.username,
+  firstName: r?.first_name,
+  lastName: r?.last_name,
+  email: r?.email,
+  phone: r?.phone,
+  groupId: r?.group_id,
+  role: r?.role ?? "user",
+  isAktif: r?.is_aktif,
+  isEmailVerified: r?.is_email_verified,
+  subscribeNewsletter: r?.subscribe_newsletter,
+  createdAt: r?.createdAt,
 });
 
+// Ekstraksi pesan error dari berbagai kemungkinan bentuk response backend.
+// Ditambahkan lebih banyak fallback + logging supaya gampang ketahuan
+// kalau ada bentuk response baru yang belum tertangani.
 const extractErrorMessage = (err) => {
   if (typeof err === "string") return err;
-  return (
+
+  const msg =
     err?.response?.data?.message ||
     err?.response?.data?.error?.message ||
+    err?.response?.data?.error ||
+    err?.response?.data?.errors?.[0]?.message ||
+    err?.response?.data?.errors?.[0] ||
+    err?.data?.message ||
     err?.message ||
-    "Terjadi kesalahan pada server"
-  );
+    (err?.response?.status
+      ? `Terjadi kesalahan pada server (status ${err.response.status})`
+      : null) ||
+    "Terjadi kesalahan pada server. Silakan coba lagi.";
+
+  // Debugging: kalau bentuk error tidak dikenali, tampilkan di console
+  // supaya mudah ditelusuri bentuk response asli dari backend/api_client.
+  if (process.env.NODE_ENV !== "production") {
+    console.error("[UserProvider] Error captured:", err);
+  }
+
+  return msg;
 };
 
 export const UserContext = createContext(null);
@@ -42,9 +60,12 @@ export const UserProvider = ({ children }) => {
     setError("");
   }, []);
 
-  const hasRole = useCallback((...roles) => {
-    return roles.includes(user?.role);
-  }, [user]);
+  const hasRole = useCallback(
+    (...roles) => {
+      return roles.includes(user?.role);
+    },
+    [user]
+  );
 
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
@@ -69,8 +90,13 @@ export const UserProvider = ({ children }) => {
     setLoading(true);
     setError("");
     try {
-      await API.post(ENDPOINTS.REGISTER, formData);
-      return { success: true };
+      const data = await API.post(ENDPOINTS.REGISTER, formData);
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[UserProvider] registerUser response:", data);
+      }
+
+      return { success: true, data };
     } catch (err) {
       const msg = extractErrorMessage(err);
       setError(msg);
@@ -86,8 +112,11 @@ export const UserProvider = ({ children }) => {
     try {
       const data = await API.post(ENDPOINTS.LOGIN_EMAIL, { email, password });
       const accessToken =
-        data?.accessToken || data?.token || data?.access_token ||
-        data?.data?.accessToken || data?.data?.token;
+        data?.accessToken ||
+        data?.token ||
+        data?.access_token ||
+        data?.data?.accessToken ||
+        data?.data?.token;
       const userData = data?.user || data?.data?.user || data?.data;
 
       if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
@@ -110,13 +139,20 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const data = await API.post(ENDPOINTS.LOGIN_USERNAME, { username, password });
-      const { accessToken, user: userData } = data;
+      const accessToken =
+        data?.accessToken ||
+        data?.token ||
+        data?.access_token ||
+        data?.data?.accessToken ||
+        data?.data?.token;
+      const userData = data?.user || data?.data?.user || data?.data;
 
       if (!accessToken) throw new Error("Token tidak ditemukan dalam respons server");
 
       localStorage.setItem("token", accessToken);
-      setUser(mapResponseToUser(userData));
-      return { success: true };
+      const mappedUser = mapResponseToUser(userData);
+      setUser(mappedUser);
+      return { success: true, user: mappedUser };
     } catch (err) {
       const msg = extractErrorMessage(err);
       setError(msg);
@@ -177,7 +213,11 @@ export const UserProvider = ({ children }) => {
     setError("");
     try {
       const data = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
-      if (!data.otp_token) return { success: false, message: "Email tidak terdaftar." };
+      if (!data?.otp_token) {
+        const msg = "Email tidak terdaftar.";
+        setError(msg);
+        return { success: false, message: msg };
+      }
       return { success: true, otpToken: data.otp_token };
     } catch (err) {
       const msg = extractErrorMessage(err);

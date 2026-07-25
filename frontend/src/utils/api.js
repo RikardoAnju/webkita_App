@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = "https://webkita-worker-api.rikardoanju1110.workers.dev/api"
+const BASE_URL = "https://webkita-worker-api.anjo24696.workers.dev/api"
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

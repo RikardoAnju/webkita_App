@@ -6,6 +6,6 @@
   "vars": {
     "MAIL_FROM_EMAIL": "noreply@webkita.online",
     "MAIL_FROM_NAME": "WebKita",
-    "APP_URL": "https://webkita-worker-api.rikardoanju1110.workers.dev"
+    "APP_URL": "https://www.webkita.online"
   }
 }

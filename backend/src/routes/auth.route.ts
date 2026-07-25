@@ -7,6 +7,7 @@ import {
     forgotPassword,
     verifyOtp,
     resetPassword,
+    resendVerification,
 } from '../services/auth.service'
 import { authMiddleware } from '../middleware/auth.middleware'
 
@@ -204,7 +205,23 @@ authRoute.post('/reset-password', async (c) => {
 })
 
 authRoute.post('/resend-verification', async (c) => {
-    return c.json({ message: 'Resend Verification' })
+    try {
+        const body = await c.req.json()
+        const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+        await resendVerification(supabase, body.email, {
+            resendApiKey: c.env.RESEND_API_KEY,
+            mailFromEmail: c.env.MAIL_FROM_EMAIL,
+            mailFromName: c.env.MAIL_FROM_NAME,
+            appUrl: c.env.APP_URL,
+        })
+        return c.json({
+            status: 'success',
+            message: 'Email verifikasi baru telah dikirim. Cek inbox Anda.',
+        })
+    } catch (err: any) {
+        const error = handleError(err)
+        return c.json(error.body, error.code as any)
+    }
 })
 
 authRoute.get('/profile', authMiddleware, async (c) => {

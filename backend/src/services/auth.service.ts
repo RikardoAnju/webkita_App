@@ -54,7 +54,7 @@ async function sendVerificationEmail(
   toName: string,
   token: string
 ) {
-  const verifyUrl = `${config.appUrl}/api/auth/verify-email?token=${token}`
+  const verifyUrl = `${config.appUrl}/auth/verify-email?token=${token}&email=${encodeURIComponent(toEmail)}`
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -315,6 +315,50 @@ export async function registerUser(
   await sendVerificationEmail(emailConfig, req.email, fullName, verificationToken)
 
   return toUserResponse(user)
+}
+
+export async function resendVerification(
+  supabase: SupabaseClient,
+  email: string,
+  emailConfig: EmailConfig
+) {
+  if (!email) {
+    throw appError('Email tidak boleh kosong', 400, 'email')
+  }
+
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('id, email, first_name, last_name, username, email_verified_at')
+    .eq('email', email)
+    .is('deleted_at', null)
+    .single<User>()
+
+  if (error || !user) {
+    throw appError('Email tidak ditemukan', 404, 'email')
+  }
+
+  if (user.email_verified_at) {
+    throw appError('Email sudah diverifikasi', 400, 'email')
+  }
+
+  const verificationToken = generateSecureToken(32)
+  const tokenExpiresAt = new Date()
+  tokenExpiresAt.setHours(tokenExpiresAt.getHours() + 24)
+
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({
+      verification_token: verificationToken,
+      token_expires_at: tokenExpiresAt.toISOString(),
+    })
+    .eq('id', user.id)
+
+  if (updateError) {
+    throw appError('Gagal membuat token verifikasi', 500)
+  }
+
+  const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username
+  await sendVerificationEmail(emailConfig, user.email, fullName, verificationToken)
 }
 
 export async function forgotPassword(
