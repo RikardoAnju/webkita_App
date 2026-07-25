@@ -49,7 +49,12 @@ export const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  // Terpisah dari `loading`: hanya untuk pengecekan sesi sekali di awal load app.
+  // Guard rute (GuestGuard/AdminGuard) HARUS pakai ini, bukan `loading`, supaya
+  // komponen seperti Register/Login tidak ke-unmount tiap kali ada aksi async
+  // (yang men-toggle `loading`) sedang berjalan.
+  const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState("");
 
   const clearError = useCallback(() => setError(""), []);
@@ -81,7 +86,7 @@ export const UserProvider = ({ children }) => {
           logoutUser();
         }
       }
-      setLoading(false);
+      setInitializing(false);
     };
     checkSession();
   }, [logoutUser]);
@@ -248,6 +253,7 @@ export const UserProvider = ({ children }) => {
       value={{
         user,
         loading,
+        initializing,
         error,
         isAuthenticated: !!user,
         isAdmin,

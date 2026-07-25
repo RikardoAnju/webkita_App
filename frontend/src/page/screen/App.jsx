@@ -33,16 +33,21 @@ const Spinner = () => (
 );
 
 // Guard: hanya admin & developer
+// Pakai `initializing` (bukan `loading`), supaya guard ini tidak ikut ke-trigger
+// setiap kali ada aksi form async (login/register/dst) sedang berjalan —
+// kalau pakai `loading`, komponen anak (mis. Register) akan ke-unmount lalu
+// mount ulang di tengah proses submit, sehingga state lokalnya (popup sukses,
+// pesan error) hilang begitu saja.
 const AdminGuard = ({ children }) => {
-  const { user, loading } = useUser();
-  if (loading) return <Spinner />;
+  const { user, initializing } = useUser();
+  if (initializing) return <Spinner />;
   if (!user || !ADMIN_ROLES.includes(user.role)) return <Navigate to="/login" replace />;
   return children;
 };
 
 const GuestGuard = ({ children }) => {
-  const { user, loading } = useUser();
-  if (loading) return <Spinner />;
+  const { user, initializing } = useUser();
+  if (initializing) return <Spinner />;
   if (user && ADMIN_ROLES.includes(user.role)) return <Navigate to="/admin" replace />;
   if (user) return <Navigate to="/" replace />;
   return children;
@@ -50,8 +55,8 @@ const GuestGuard = ({ children }) => {
 
 
 const AdminRedirect = ({ children }) => {
-  const { user, loading } = useUser();
-  if (loading) return <Spinner />;
+  const { user, initializing } = useUser();
+  if (initializing) return <Spinner />;
   if (user && ADMIN_ROLES.includes(user.role)) return <Navigate to="/admin" replace />;
   return children;
 };
