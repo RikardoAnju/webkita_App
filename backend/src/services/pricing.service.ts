@@ -144,7 +144,7 @@ export class PricingService {
     return this.getById(id);
   }
 
-  // ── Delete ────────────────────────────────────────────
+
   async delete(id: string): Promise<{ message: string }> {
     const { error } = await this.supabase
       .from("pricing_plans")
@@ -155,7 +155,6 @@ export class PricingService {
     return { message: "Plan deleted successfully" };
   }
 
-  // ── Toggle Active ─────────────────────────────────────
   async toggleActive(id: string): Promise<PricingPlan> {
     const plan = await this.getById(id);
 
