@@ -6,6 +6,7 @@
   "vars": {
     "MAIL_FROM_EMAIL": "noreply@webkita.online",
     "MAIL_FROM_NAME": "WebKita",
-    "APP_URL": "https://www.webkita.online"
+    "APP_URL": "https://www.webkita.online",
+    "MIDTRANS_IS_PRODUCTION": "false"
   }
 }
