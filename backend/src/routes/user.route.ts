@@ -10,7 +10,7 @@ type Env = {
 
 export const userRoute = new Hono<{ Bindings: Env }>()
 
-// GET /api/users — ambil semua user (admin only)
+
 userRoute.get('/', authMiddleware, async (c) => {
   try {
     const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -34,7 +34,7 @@ userRoute.get('/', authMiddleware, async (c) => {
   }
 })
 
-// DELETE /api/users/:username
+
 userRoute.delete('/:username', authMiddleware, async (c) => {
   try {
     const username = c.req.param('username')

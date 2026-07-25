@@ -1,17 +1,13 @@
-// project_model.js
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-// Status yang dipakai backend (project.service.ts)
 export const ProjectStatus = {
   Pending:  "pending",
-  Process:  "process",    // fix: was "in_review", backend pakai "process"
+  Process:  "process",   
   Approved: "approved",
   Rejected: "rejected",
-  Done:     "done",       // tambah: ada di backend tapi belum ada di sini
+  Done:     "done",       
 };
 
-// Kategori yang ditampilkan di UI (Harga.jsx & InformasiDetail.jsx)
+
 export const CategoryLabel = {
   Ecommerce:      "E-commerce",
   LandingPage:    "Landing Page",
@@ -24,7 +20,7 @@ export const CategoryLabel = {
   Other:          "Lainnya",
 };
 
-// Kategori yang diterima backend (project.service.ts validCategories)
+
 export const CategoryType = {
   Website:   "website",
   Mobile:    "mobile",
@@ -34,7 +30,7 @@ export const CategoryType = {
   Other:     "other",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 
 /** @param {string} category */
 export const isValidCategory = (category) =>
@@ -44,7 +40,6 @@ export const isValidCategory = (category) =>
 export const isValidProjectStatus = (status) =>
   Object.values(ProjectStatus).includes(status);
 
-// ─── Typedefs ─────────────────────────────────────────────────────────────────
 
 /**
  * @typedef {Object} Project

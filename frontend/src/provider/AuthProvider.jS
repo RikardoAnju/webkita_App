@@ -11,7 +11,7 @@ export const RequireAuth = ({ redirectTo = "/login" }) => {
   return <Outlet />;
 };
 
-// Proteksi route: harus role tertentu
+
 export const RequireRole = ({ roles = [], redirectTo = "/403" }) => {
   const { hasRole, loading } = useUser();
 

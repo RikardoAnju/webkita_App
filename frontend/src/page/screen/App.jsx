@@ -40,7 +40,6 @@ const AdminGuard = ({ children }) => {
   return children;
 };
 
-// Guard: jika sudah login sebagai admin/dev → ke /admin
 const GuestGuard = ({ children }) => {
   const { user, loading } = useUser();
   if (loading) return <Spinner />;
@@ -49,7 +48,7 @@ const GuestGuard = ({ children }) => {
   return children;
 };
 
-// Guard: jika admin buka halaman publik → redirect ke /admin
+
 const AdminRedirect = ({ children }) => {
   const { user, loading } = useUser();
   if (loading) return <Spinner />;

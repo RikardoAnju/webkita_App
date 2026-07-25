@@ -20,7 +20,7 @@ export const PaymentProvider = ({ children }) => {
 
     const clearError = () => setError("");
 
-    // --- 1. BUAT TRANSAKSI ---
+ 
     const createTransaction = async (projectId, payload) => {
         setLoading(true);
         setError("");
@@ -75,7 +75,7 @@ export const PaymentProvider = ({ children }) => {
                 onError?.(result);
             },
             onClose: () => {
-                // user tutup popup tanpa bayar
+             
             },
         });
     };

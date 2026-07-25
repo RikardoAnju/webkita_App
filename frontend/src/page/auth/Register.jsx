@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useUser } from "../../provider/user_provider";
 
-// Komponen Password Input dengan Memo agar tidak re-render yang tidak perlu
+
 const PasswordInputWithValidation = React.memo(({ id, label, value, onChange, disabled, show, toggleShow, isValid }) => (
   <div>
     <label htmlFor={id} className="block text-sm font-semibold text-gray-700 mb-2">

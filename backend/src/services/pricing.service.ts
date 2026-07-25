@@ -15,7 +15,7 @@ const SELECT_WITH_DETAILS = `
 export class PricingService {
   constructor(private supabase: SupabaseClient) {}
 
-  // ── Public: hanya yang aktif, untuk frontend ──────────
+  
   async getAllActive(): Promise<PricingPlanWithDetails[]> {
     const { data, error } = await this.supabase
       .from("pricing_plans")
