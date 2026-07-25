@@ -8,6 +8,7 @@ import {
     verifyOtp,
     resetPassword,
     resendVerification,
+    logoutUser,
 } from '../services/auth.service'
 import { authMiddleware } from '../middleware/auth.middleware'
 
@@ -222,6 +223,18 @@ authRoute.post('/resend-verification', async (c) => {
     }
 })
 
+authRoute.post('/logout', authMiddleware, async (c) => {
+    try {
+        const jwtUser = c.get('user')
+        const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+        await logoutUser(supabase, jwtUser.user_id)
+        return c.json({ status: 'success', message: 'Logout berhasil' })
+    } catch (err: any) {
+        const error = handleError(err)
+        return c.json(error.body, error.code as any)
+    }
+})
+
 authRoute.get('/profile', authMiddleware, async (c) => {
     try {
         const jwtUser = c.get('user')
@@ -238,7 +251,7 @@ authRoute.get('/profile', authMiddleware, async (c) => {
             return c.json({ status: 'error', message: 'User tidak ditemukan' }, 404)
         }
 
-        const { password, verification_token, token_expires_at, deleted_at, ...safeUser } = data
+        const { password, verification_token, token_expires_at, deleted_at, token_version, ...safeUser } = data
 
         return c.json({
             status: 'success',

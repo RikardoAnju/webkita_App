@@ -1,6 +1,7 @@
 export const ENDPOINTS = {
   LOGIN_EMAIL: "/auth/login-email",
   LOGIN_USERNAME: "/auth/login-username",
+  LOGOUT: "/auth/logout",
   REGISTER: "/auth/register",
   VERIFY_EMAIL: "/auth/verify-email",
   RESEND_VERIFICATION: "/auth/resend-verification",

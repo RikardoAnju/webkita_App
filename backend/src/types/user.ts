@@ -15,12 +15,13 @@ export type User = {
   email_verified_at: string | null
   verification_token: string | null
   token_expires_at: string | null
+  token_version: number
   created_at: string
   updated_at: string
   deleted_at: string | null
 }
 
-export type UserResponse = Omit<User, 'password' | 'verification_token' | 'token_expires_at' | 'deleted_at'>
+export type UserResponse = Omit<User, 'password' | 'verification_token' | 'token_expires_at' | 'deleted_at' | 'token_version'>
 
 export type LoginEmailRequest = {
   email: string

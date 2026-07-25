@@ -4,6 +4,7 @@ import type { UserRole } from '../types/user'
 export async function generateAccessToken(
   userId: number,
   role: UserRole,
+  tokenVersion: number,
   secret: string
 ) {
   const key = new TextEncoder().encode(secret)
@@ -11,6 +12,7 @@ export async function generateAccessToken(
   return await new SignJWT({
     user_id: userId,
     role,
+    token_version: tokenVersion,
   })
     .setProtectedHeader({
       alg: 'HS256',

@@ -22,6 +22,7 @@ function toUserResponse(user: User): UserResponse & { is_email_verified: boolean
     verification_token,
     token_expires_at,
     deleted_at,
+    token_version,
     ...safeUser
   } = user
 
@@ -178,7 +179,7 @@ export async function loginWithEmail(
     throw appError('Akun tidak aktif', 403, 'user')
   }
 
-  const token = await generateAccessToken(user.id, user.role, jwtSecret)
+  const token = await generateAccessToken(user.id, user.role, user.token_version ?? 0, jwtSecret)
   const responseUser = toUserResponse(user)
 
   return {
@@ -221,12 +222,33 @@ export async function loginWithUsername(
     throw appError('Akun tidak aktif', 403, 'user')
   }
 
-  const token = await generateAccessToken(user.id, user.role, jwtSecret)
+  const token = await generateAccessToken(user.id, user.role, user.token_version ?? 0, jwtSecret)
   const responseUser = toUserResponse(user)
 
   return {
     user: responseUser,
     accessToken: token,
+  }
+}
+
+export async function logoutUser(supabase: SupabaseClient, userId: number) {
+  const { data: user, error: fetchError } = await supabase
+    .from('users')
+    .select('token_version')
+    .eq('id', userId)
+    .single()
+
+  if (fetchError || !user) {
+    throw appError('User tidak ditemukan', 404)
+  }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ token_version: (user.token_version ?? 0) + 1 })
+    .eq('id', userId)
+
+  if (error) {
+    throw appError('Gagal logout', 500)
   }
 }
 

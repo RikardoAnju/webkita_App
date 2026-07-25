@@ -59,10 +59,20 @@ export const UserProvider = ({ children }) => {
 
   const clearError = useCallback(() => setError(""), []);
 
-  const logoutUser = useCallback(() => {
-    localStorage.removeItem("token");
-    setUser(null);
-    setError("");
+  const logoutUser = useCallback(async () => {
+    try {
+      // Beri tahu server supaya token_version user naik — token lama (termasuk
+      // yang mungkin sudah bocor/dicuri) langsung ditolak di request berikutnya,
+      // bukan cuma dihapus dari browser ini saja.
+      await API.post(ENDPOINTS.LOGOUT);
+    } catch {
+      // Tetap lanjut hapus sesi lokal walau request ke server gagal
+      // (mis. sudah offline) — jangan sampai user tidak bisa logout.
+    } finally {
+      localStorage.removeItem("token");
+      setUser(null);
+      setError("");
+    }
   }, []);
 
   const hasRole = useCallback(
