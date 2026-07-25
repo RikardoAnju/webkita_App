@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Check, ArrowRight, X } from "lucide-react";
 import { useUser } from "../provider/user_provider";
-import API from "../utils/api";
+import API from "../core/utils/api_client";
 
 const PricingModal = ({ plan, isOpen, onClose, onSelectPlan }) => {
   if (!isOpen || !plan) return null;

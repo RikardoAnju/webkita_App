@@ -4,7 +4,7 @@ import {
   PricingPlan,
   PricingPlanWithDetails,
   UpdatePricingPlanBody,
-} from "../types/pricing.type";
+} from "../types/pricing";
 
 const SELECT_WITH_DETAILS = `
   *,

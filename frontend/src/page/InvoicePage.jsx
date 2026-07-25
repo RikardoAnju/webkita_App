@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, CheckCircle, Building2, User, Phone, Mail, Calendar, Hash } from "lucide-react";
 
-import API from "../utils/api";
+import API from "../core/utils/api_client";
 
 const formatRupiah = (value) => {
   if (!value) return "Rp 0";

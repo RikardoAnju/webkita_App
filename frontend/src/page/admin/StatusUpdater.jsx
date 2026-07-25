@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { STATUS_CONFIG, STATUS_ORDER } from "../../utils/adminConstants";
 import StatusBadge from "./StatusBadge";
-import API from "../../utils/api";
+import API from "../../core/utils/api_client";
 
 const StatusUpdater = ({ order, onUpdated }) => {
   const [open, setOpen] = useState(false);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, X, GripVertical } from "lucide-react";
-import API from "../../utils/api";
+import API from "../../core/utils/api_client";
 
 // ── helpers ───────────────────────────────────────────────────────
 const TIER_OPTIONS = ["starter", "basic", "professional", "enterprise"];

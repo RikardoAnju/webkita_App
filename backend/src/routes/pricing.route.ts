@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { PricingService } from "../services/pricing.service";
-import { CreatePricingPlanBody, UpdatePricingPlanBody } from "../types/pricing.type";
+import { CreatePricingPlanBody, UpdatePricingPlanBody } from "../types/pricing";
 import { createSupabase } from "../lib/supabase";
 import { authMiddleware, roleMiddleware } from "../middleware/auth.middleware";
 

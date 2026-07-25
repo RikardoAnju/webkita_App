@@ -4,7 +4,7 @@ import {
   Calendar, User, Phone, FileText, TrendingUp, RefreshCw, Layers, Tag, CreditCard,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import API from "../utils/api";
+import API from "../core/utils/api_client";
 import { usePayment } from "../provider/payment_provider";
 import { useUser } from "../provider/user_provider";
 

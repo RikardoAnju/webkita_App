@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { RefreshCw, AlertCircle } from "lucide-react";
-import API from "../../utils/api";
+import API from "../../core/utils/api_client";
 import { transformProject, transformUser } from "../../utils/adminConstants";
 import AdminSidebar from "./AdminSidebar";
 import StatsGrid from "./StatsGrid";

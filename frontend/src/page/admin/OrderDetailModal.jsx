@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, FileText, User, Phone, Tag, Paperclip, Download } from "lucide-react";
 import { formatDateLong, PLAN_CONFIG } from "../../utils/adminConstants";
-import API from "../../utils/api";
+import API from "../../core/utils/api_client";
 import StatusBadge from "./StatusBadge";
 import StatusUpdater from "./StatusUpdater";
 
