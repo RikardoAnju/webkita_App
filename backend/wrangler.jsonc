@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "webkita-worker-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-06",
+  "vars": {
+    "MAIL_FROM_EMAIL": "noreply@webkita.online",
+    "MAIL_FROM_NAME": "WebKita",
+    "APP_URL": "https://webkita-worker-api.rikardoanju1110.workers.dev"
+  }
+}
