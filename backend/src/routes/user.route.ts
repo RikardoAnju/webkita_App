@@ -8,7 +8,57 @@ type Env = {
   JWT_SECRET: string
 }
 
-export const userRoute = new Hono<{ Bindings: Env }>()
+type Variables = {
+  user: { user_id: number; role?: string }
+}
+
+export const userRoute = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+// PUT /users/me — update profil sendiri (bukan admin CRUD)
+userRoute.put('/me', authMiddleware, async (c) => {
+  try {
+    const jwtUser = c.get('user')
+    const body = await c.req.json()
+    const supabase = createSupabase(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+
+    const allowedFields = ['username', 'first_name', 'last_name', 'phone', 'subscribe_newsletter']
+    const updates: Record<string, unknown> = {}
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) updates[field] = body[field]
+    }
+
+    if (typeof updates.username === 'string') {
+      if (updates.username.trim().length < 3) {
+        return c.json({ status: 'error', message: 'Username minimal 3 karakter' }, 400)
+      }
+      const { count } = await supabase
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .eq('username', updates.username)
+        .neq('id', jwtUser.user_id)
+      if ((count || 0) > 0) {
+        return c.json({ status: 'error', message: 'Username sudah digunakan' }, 409)
+      }
+    }
+
+    updates.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', jwtUser.user_id)
+      .select('id, username, first_name, last_name, email, phone, group_id, role, is_aktif, subscribe_newsletter, email_verified_at, created_at, updated_at')
+      .single()
+
+    if (error) {
+      return c.json({ status: 'error', message: error.message }, 500)
+    }
+
+    return c.json({ status: 'success', message: 'Profil berhasil diperbarui', ...data })
+  } catch (err: any) {
+    return c.json({ status: 'error', message: err?.message || 'Gagal update profil' }, 500)
+  }
+})
 
 
 // Daftar & hapus user berisi data pribadi (email, telepon) & aksi destruktif —

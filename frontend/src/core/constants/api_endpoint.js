@@ -10,7 +10,7 @@ export const ENDPOINTS = {
   RESET_PASSWORD: "/auth/reset-password",
   GET_PROFILE: "/auth/profile",
   GET_ALL_USERS: "/users",
-  UPDATE_USER: "/user/update",
+  UPDATE_USER: "/users/me",
   DELETE_USER: (username) => `/users/${username}`,
   CREATE_PROJECT: "/project",
   GET_ALL_PROJECTS: "/project",
