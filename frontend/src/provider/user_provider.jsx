@@ -217,13 +217,10 @@ export const UserProvider = ({ children }) => {
     setLoading(true);
     setError("");
     try {
-      const data = await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
-      if (!data?.otp_token) {
-        const msg = "Email tidak terdaftar.";
-        setError(msg);
-        return { success: false, message: msg };
-      }
-      return { success: true, otpToken: data.otp_token };
+      // Backend hanya mengirim OTP ke email & balas {status:'success'}, tidak ada
+      // token di response ini — jangan syaratkan field yang memang tidak dikirim.
+      await API.post(ENDPOINTS.FORGOT_PASSWORD, { email });
+      return { success: true };
     } catch (err) {
       const msg = extractErrorMessage(err);
       setError(msg);
@@ -233,11 +230,29 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const resetPassword = async (payload) => {
+  const verifyOtp = async (email, otp) => {
     setLoading(true);
     setError("");
     try {
-      await API.post(ENDPOINTS.RESET_PASSWORD, payload);
+      const data = await API.post(ENDPOINTS.VERIFY_OTP, { email, otp });
+      return { success: true, resetToken: data?.resetToken };
+    } catch (err) {
+      const msg = extractErrorMessage(err);
+      setError(msg);
+      return { success: false, message: msg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async ({ resetToken, newPassword }) => {
+    setLoading(true);
+    setError("");
+    try {
+      await API.post(ENDPOINTS.RESET_PASSWORD, {
+        reset_token: resetToken,
+        new_password: newPassword,
+      });
       return { success: true };
     } catch (err) {
       const msg = extractErrorMessage(err);
@@ -267,6 +282,7 @@ export const UserProvider = ({ children }) => {
         verifyEmail,
         resendVerification,
         forgotPassword,
+        verifyOtp,
         resetPassword,
         setError,
         clearError,

@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { ArrowLeft, AlertCircle, KeyRound } from "lucide-react";
 import { useUser } from "../../provider/user_provider";
 
-function VerifyOTP({ otpToken, email, onBackToForgot, onOTPVerified }) {
-  const { resetPassword } = useUser();
+function VerifyOTP({ email, onBackToForgot, onOTPVerified }) {
+  const { verifyOtp } = useUser();
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -51,10 +51,6 @@ function VerifyOTP({ otpToken, email, onBackToForgot, onOTPVerified }) {
     inputRefs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
-  // Verifikasi OTP saja — gunakan dummy reset untuk cek validitas token+otp
-  // Trik: kirim new_password kosong, backend akan reject karena password, bukan karena OTP salah
-  // ATAU: kalau backend punya endpoint verify-otp tersendiri, pakai itu
-  // Di sini kita simpan otp lalu lanjut ke halaman reset
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isOtpComplete) return;
@@ -62,42 +58,18 @@ function VerifyOTP({ otpToken, email, onBackToForgot, onOTPVerified }) {
     setLoading(true);
     setError("");
 
-    // Verifikasi OTP dulu dengan mengirim ke backend
-    // Kita pakai resetPassword dengan password placeholder untuk cek OTP valid
-    // Jika backend return error soal password (bukan OTP), berarti OTP benar
-    const result = await resetPassword({
-      otp_token: otpToken,
-      otp: otpValue,
-      new_password: "placeholder_check_only",
-      confirm_password: "placeholder_check_only",
-    });
+    const result = await verifyOtp(email, otpValue);
 
     setLoading(false);
 
-    // Jika sukses atau error bukan soal OTP, berarti OTP valid
-    if (result.success) {
-      // Kalau backend langsung sukses dengan placeholder (tidak mungkin tapi handle)
-      onOTPVerified({ otpToken, otp: otpValue, email });
-      return;
-    }
-
-    const msg = result.message?.toLowerCase() || "";
-    // Jika error soal password (bukan OTP invalid/expired), berarti OTP benar
-    const isOtpError =
-      msg.includes("otp") ||
-      msg.includes("invalid") ||
-      msg.includes("expired") ||
-      msg.includes("kedaluwarsa") ||
-      msg.includes("tidak valid");
-
-    if (isOtpError) {
+    if (!result.success) {
       setError(result.message || "Kode OTP tidak valid atau sudah kedaluwarsa.");
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
-    } else {
-      // Error soal password = OTP valid, lanjut ke reset password
-      onOTPVerified({ otpToken, otp: otpValue, email });
+      return;
     }
+
+    onOTPVerified({ resetToken: result.resetToken, email });
   };
 
   return (

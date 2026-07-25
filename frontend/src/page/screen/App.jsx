@@ -68,8 +68,8 @@ function AppRoutes() {
     const saved = sessionStorage.getItem("selectedPlan");
     return saved ? JSON.parse(saved) : null;
   });
-  const [forgotData, setForgotData] = useState({ otpToken: "", email: "" });
-  const [verifiedData, setVerifiedData] = useState({ otpToken: "", otp: "", email: "" });
+  const [forgotData, setForgotData] = useState({ email: "" });
+  const [verifiedData, setVerifiedData] = useState({ resetToken: "", email: "" });
 
   const handleNavigateToDetail = (plan) => {
     setSelectedPlanDetails(plan);
@@ -77,13 +77,13 @@ function AppRoutes() {
     navigate("/informasidetail");
   };
 
-  const handleOTPSent = ({ otpToken, email }) => {
-    setForgotData({ otpToken, email });
+  const handleOTPSent = ({ email }) => {
+    setForgotData({ email });
     navigate("/otp-password");
   };
 
-  const handleOTPVerified = ({ otpToken, otp, email }) => {
-    setVerifiedData({ otpToken, otp, email });
+  const handleOTPVerified = ({ resetToken, email }) => {
+    setVerifiedData({ resetToken, email });
     navigate("/reset-password");
   };
 
@@ -135,7 +135,6 @@ function AppRoutes() {
       } />
       <Route path="/otp-password" element={
         <VerifyOTP
-          otpToken={forgotData.otpToken}
           email={forgotData.email}
           onBackToForgot={() => navigate("/forgot-password")}
           onOTPVerified={handleOTPVerified}
@@ -143,8 +142,7 @@ function AppRoutes() {
       } />
       <Route path="/reset-password" element={
         <ResetPassword
-          otpToken={verifiedData.otpToken}
-          otp={verifiedData.otp}
+          resetToken={verifiedData.resetToken}
           email={verifiedData.email}
           onBackToVerify={() => navigate("/otp-password")}
           onSuccess={() => navigate("/login")}

@@ -5,6 +5,7 @@ export const ENDPOINTS = {
   VERIFY_EMAIL: "/auth/verify-email",
   RESEND_VERIFICATION: "/auth/resend-verification",
   FORGOT_PASSWORD: "/auth/forgot-password",
+  VERIFY_OTP: "/auth/verify-otp",
   RESET_PASSWORD: "/auth/reset-password",
   GET_PROFILE: "/auth/profile",
   GET_ALL_USERS: "/users",

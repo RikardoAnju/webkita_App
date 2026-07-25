@@ -31,14 +31,12 @@ function ForgotPassword({ onBackToLogin, onOTPSent }) {
     setLoading(false);
 
     if (!result.success) {
-      // Backend tidak bocorkan apakah email terdaftar atau tidak —
-      // jika gagal berarti error server, bukan "email tidak ditemukan"
       setError(result.message || "Terjadi kesalahan. Silakan coba lagi.");
       return;
     }
 
-    // Lanjut ke step 2, kirim otpToken + email ke parent
-    onOTPSent({ otpToken: result.otpToken, email: email.trim() });
+    // Lanjut ke step 2: verifikasi OTP
+    onOTPSent({ email: email.trim() });
   };
 
   return (

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ArrowLeft, AlertCircle, CheckCircle, Lock, Eye, EyeOff } from "lucide-react";
 import { useUser } from "../../provider/user_provider";
 
-function ResetPassword({ otpToken, otp, email, onBackToVerify, onSuccess }) {
+function ResetPassword({ resetToken, email, onBackToVerify, onSuccess }) {
   const { resetPassword } = useUser();
 
   const [newPassword, setNewPassword] = useState("");
@@ -24,12 +24,7 @@ function ResetPassword({ otpToken, otp, email, onBackToVerify, onSuccess }) {
     setLoading(true);
     setError("");
 
-    const result = await resetPassword({
-      otp_token: otpToken,
-      otp: otp,
-      new_password: newPassword,
-      confirm_password: confirmPassword,
-    });
+    const result = await resetPassword({ resetToken, newPassword });
 
     setLoading(false);
 
