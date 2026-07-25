@@ -116,7 +116,10 @@ function AppRoutes() {
       } />
       <Route path="/register" element={
         <GuestGuard>
-          <Register onBackToHome={() => navigate("/")} />
+          <Register
+            onBackToHome={() => navigate("/")}
+            onGoToLogin={() => navigate("/login")}
+          />
         </GuestGuard>
       } />
       <Route path="/forgot-password" element={

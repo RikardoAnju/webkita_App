@@ -24,17 +24,15 @@ type Env = {
 export const authRoute = new Hono<{ Bindings: Env }>()
 
 function handleError(err: any) {
+    // Detail teknis (stack trace, raw error) hanya dicatat di log server,
+    // TIDAK dikirim ke client — supaya implementasi internal tidak bocor ke publik.
+    console.error('[auth]', err)
+
     return {
         body: {
             status: 'error',
             field: err?.field || '',
             message: err?.message || 'Terjadi kesalahan internal server',
-            detail: {
-                name: err?.name || '',
-                code: err?.code || '',
-                cause: String(err?.cause || ''),
-                raw: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-            },
         },
         code: typeof err?.code === 'number' ? err.code : 500,
     }

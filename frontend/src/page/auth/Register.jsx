@@ -59,7 +59,7 @@ const PasswordInputWithValidation = React.memo(
   )
 );
 
-function Register({ onBackToHome }) {
+function Register({ onBackToHome, onGoToLogin }) {
   // Ambil fungsi & state dari UserProvider
   const { registerUser, loading, error, setError } = useUser();
 
@@ -179,11 +179,12 @@ function Register({ onBackToHome }) {
         setSuccess(true);
         setSuccessCountdown(5);
 
+        const goToLogin = onGoToLogin || onBackToHome;
         const interval = setInterval(() => {
           setSuccessCountdown((prev) => {
             if (prev <= 1) {
               clearInterval(interval);
-              onBackToHome();
+              goToLogin();
               return 0;
             }
             return prev - 1;
@@ -225,7 +226,7 @@ function Register({ onBackToHome }) {
               Buka email Anda dan klik link verifikasi untuk mengaktifkan akun. Mengalihkan dalam {successCountdown}...
             </p>
             <button
-              onClick={onBackToHome}
+              onClick={onGoToLogin || onBackToHome}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
             >
               Lanjut ke Login

@@ -312,7 +312,15 @@ export async function registerUser(
   }
 
   const fullName = `${req.first_name || ''} ${req.last_name || ''}`.trim() || req.username
-  await sendVerificationEmail(emailConfig, req.email, fullName, verificationToken)
+
+  try {
+    await sendVerificationEmail(emailConfig, req.email, fullName, verificationToken)
+  } catch (sendError) {
+    // Rollback: jangan sisakan akun tanpa verifikasi kalau emailnya gagal terkirim,
+    // supaya user bisa coba daftar ulang dan tabel users tidak terisi data yatim.
+    await supabase.from('users').delete().eq('id', user.id)
+    throw sendError
+  }
 
   return toUserResponse(user)
 }
