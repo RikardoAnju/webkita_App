@@ -181,7 +181,7 @@ const Harga = ({ onBackToHome, onSelectPlan, onLoginClick }) => {
   useEffect(() => {
     const fetchPricingPlans = async () => {
       try {
-        const res = await API.get("/pricing");
+        const res = await API.get("/pricing/public");
         const data = res?.data ?? res ?? [];
 
         const mappedData = Array.isArray(data)
