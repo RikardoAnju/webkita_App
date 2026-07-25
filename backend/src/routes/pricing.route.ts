@@ -2,6 +2,9 @@ import { Hono } from "hono";
 import { PricingService } from "../services/pricing.service";
 import { CreatePricingPlanBody, UpdatePricingPlanBody } from "../types/pricing.type";
 import { createSupabase } from "../lib/supabase";
+import { authMiddleware, roleMiddleware } from "../middleware/auth.middleware";
+
+const requireAdmin = [authMiddleware, roleMiddleware("admin", "developer")] as const;
 
 type Env = {
   SUPABASE_URL: string;
@@ -35,8 +38,8 @@ pricing.get("/public/tier/:tier", async (c) => {
   }
 });
 
-// ── ADMIN CRUD ────────────────────────────────────────────────────
-pricing.get("/", async (c) => {
+// ── ADMIN CRUD (butuh login sebagai admin/developer) ───────────────
+pricing.get("/", ...requireAdmin, async (c) => {
   try {
     return ok(c, await getService(c).getAll());
   } catch (e: any) {
@@ -44,7 +47,7 @@ pricing.get("/", async (c) => {
   }
 });
 
-pricing.get("/:id", async (c) => {
+pricing.get("/:id", ...requireAdmin, async (c) => {
   try {
     return ok(c, await getService(c).getById(c.req.param("id")));
   } catch (e: any) {
@@ -52,7 +55,7 @@ pricing.get("/:id", async (c) => {
   }
 });
 
-pricing.post("/", async (c) => {
+pricing.post("/", ...requireAdmin, async (c) => {
   try {
     const body = await c.req.json<CreatePricingPlanBody>();
     const { title, tier, min_price, max_price, price_range } = body;
@@ -67,7 +70,7 @@ pricing.post("/", async (c) => {
   }
 });
 
-pricing.put("/:id", async (c) => {
+pricing.put("/:id", ...requireAdmin, async (c) => {
   try {
     const body = await c.req.json<UpdatePricingPlanBody>();
     return ok(c, await getService(c).update(c.req.param("id"), body));
@@ -76,7 +79,7 @@ pricing.put("/:id", async (c) => {
   }
 });
 
-pricing.delete("/:id", async (c) => {
+pricing.delete("/:id", ...requireAdmin, async (c) => {
   try {
     return ok(c, await getService(c).delete(c.req.param("id")));
   } catch (e: any) {
@@ -84,7 +87,7 @@ pricing.delete("/:id", async (c) => {
   }
 });
 
-pricing.patch("/:id/toggle-active", async (c) => {
+pricing.patch("/:id/toggle-active", ...requireAdmin, async (c) => {
   try {
     return ok(c, await getService(c).toggleActive(c.req.param("id")));
   } catch (e: any) {
