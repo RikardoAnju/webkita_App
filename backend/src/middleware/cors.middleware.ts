@@ -13,7 +13,7 @@ const ALLOWED_ORIGINS = [
 ]
 
 export const corsMiddleware = cors({
-  origin: (origin) => (origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]),
+  origin: (origin) => (origin && ALLOWED_ORIGINS.includes(origin) ? origin : ''),
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: [
     'Content-Type',
