@@ -86,4 +86,4 @@ npx wrangler deploy
 
 | Nama | Peran | Kontak |
 |------|-------|--------|
-| Rikardo Anju SinAGA | Full Stack | anjo24696@gmail.com|
+| Rikardo Anju Sinaga | Full Stack | anjo24696@gmail.com|
